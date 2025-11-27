@@ -728,17 +728,18 @@
       const width       = ROOM_DEFAULT_WIDTHS[i] ?? DEFAULT_WIDTH_M;
 
       rooms.push({
-        name: override,
-        backgroundImage: null,
-        imageLoaded: false,
-        roomWidthMeters: width,
-        roomHeightMeters: DEFAULT_HEIGHT_M,
-        objects: [],
-        nextObjectId: 1,
-        selectedObjectId: null,
-        undoStack: [],
-        zoom: 1,
-        params: {
+  name: override,
+  backgroundImage: null,
+  imageLoaded: false,
+  roomWidthMeters: width,
+  roomHeightMeters: DEFAULT_HEIGHT_M,
+  objects: [],
+  nextObjectId: 1,
+  selectedObjectId: null,      // objet “actif” (dernier cliqué)
+  selectedObjectIds: [],       // multi-sélection
+  undoStack: [],
+  zoom: 1,
+  params: {
           screen: 'non',
           flipchart: 'non',
           micro: 'non',
@@ -781,6 +782,10 @@
     let activeGroupId       = null;
     let groupLastMouseXM    = 0;
     let groupLastMouseYM    = 0;
+// pour le déplacement d’un ensemble d’objets en mode "objet"
+let lastMouseXM         = 0;
+let lastMouseYM         = 0;
+
 
     let isDrawingLegend = false;
 
@@ -1104,18 +1109,32 @@ case 'blocPodium':      return { wM: 1.5, hM: 1 };
         drawObject(obj);
       }
 
-      if (interactionMode === 'object' && room.selectedObjectId != null) {
-        const obj = room.objects.find(o => o.id === room.selectedObjectId);
-        if (obj) drawSelectionOutline(obj);
-      } else if (interactionMode === 'dispo' && lastPlacedGroupInfo && lastPlacedGroupInfo.roomIndex === currentRoomIndex) {
-        const group = dispositionGroups[lastPlacedGroupInfo.groupId];
-        if (group && group.ids && group.ids.length) {
-          const idSet = new Set(group.ids);
-          for (const o of room.objects) {
-            if (idSet.has(o.id)) drawSelectionOutline(o);
-          }
-        }
+if (interactionMode === 'object') {
+  let selIds = null;
+
+  if (room.selectedObjectIds && room.selectedObjectIds.length > 0) {
+    selIds = new Set(room.selectedObjectIds);   // multi-sélection
+  } else if (room.selectedObjectId != null) {
+    selIds = new Set([room.selectedObjectId]);  // sélection simple
+  }
+
+  if (selIds) {
+    for (const o of room.objects) {
+      if (selIds.has(o.id)) {
+        drawSelectionOutline(o);
       }
+    }
+  }
+} else if (interactionMode === 'dispo' && lastPlacedGroupInfo && lastPlacedGroupInfo.roomIndex === currentRoomIndex) {
+  const group = dispositionGroups[lastPlacedGroupInfo.groupId];
+  if (group && group.ids && group.ids.length) {
+    const idSet = new Set(group.ids);
+    for (const o of room.objects) {
+      if (idSet.has(o.id)) drawSelectionOutline(o);
+    }
+  }
+}
+
 
       ctx.save();
       ctx.font = 'bold 18px sans-serif';
@@ -1456,35 +1475,101 @@ case 'blocPodium':      return { wM: 1.5, hM: 1 };
     }
 
     function refreshSelectionUI() {
-      if (currentPageIndex === 0 || currentPageIndex === MANUAL_PAGE_INDEX) {
-        if (noSelectionMsg)   noSelectionMsg.style.display = 'block';
-        if (selectionControls)selectionControls.style.display = 'none';
-        return;
-      }
-      const room = getCurrentRoom();
-      if (!noSelectionMsg || !selectionControls) return;
-      if (room.selectedObjectId != null) {
-        noSelectionMsg.style.display    = 'none';
-        selectionControls.style.display = 'block';
-      } else {
-        noSelectionMsg.style.display    = 'block';
-        selectionControls.style.display = 'none';
-      }
+  if (currentPageIndex === 0 || currentPageIndex === MANUAL_PAGE_INDEX) {
+    if (noSelectionMsg)   noSelectionMsg.style.display = 'block';
+    if (selectionControls)selectionControls.style.display = 'none';
+    return;
+  }
+  const room = getCurrentRoom();
+  const hasSelection =
+    (room.selectedObjectIds && room.selectedObjectIds.length > 0) ||
+    (room.selectedObjectId != null);
+
+  if (!noSelectionMsg || !selectionControls) return;
+  if (hasSelection) {
+    noSelectionMsg.style.display    = 'none';
+    selectionControls.style.display = 'block';
+  } else {
+    noSelectionMsg.style.display    = 'block';
+    selectionControls.style.display = 'none';
+  }
+}
+
+
+
+function getSelectedObjectIds(room) {
+  const set = new Set();
+
+  if (Array.isArray(room.selectedObjectIds)) {
+    for (const id of room.selectedObjectIds) {
+      set.add(id);
     }
+  }
 
-    function deleteSelectedObject() {
-      if (currentPageIndex === 0 || currentPageIndex === MANUAL_PAGE_INDEX) return;
-      if (interactionMode !== 'object') return;
+  if (room.selectedObjectId != null) {
+    set.add(room.selectedObjectId);
+  }
 
-      const room = getCurrentRoom();
-      if (room.selectedObjectId == null) return;
+  return Array.from(set);
+}
 
-      pushUndoState();
-      room.objects = room.objects.filter(o => o.id !== room.selectedObjectId);
+
+// options = { multi: bool }  => multi = Ctrl+clic
+function selectObject(obj, options = {}) {
+  const { multi = false } = options;
+  const room = getCurrentRoom();
+
+  if (!obj) {
+    room.selectedObjectId  = null;
+    room.selectedObjectIds = [];
+    refreshSelectionUI();
+    draw();
+    return;
+  }
+
+  if (!multi) {
+    // sélection simple
+    room.selectedObjectId  = obj.id;
+    room.selectedObjectIds = [obj.id];
+  } else {
+    // sélection multiple (Ctrl+clic) : toggle
+    if (!Array.isArray(room.selectedObjectIds)) {
+      room.selectedObjectIds = [];
+    }
+    const idx = room.selectedObjectIds.indexOf(obj.id);
+    if (idx >= 0) {
+      room.selectedObjectIds.splice(idx, 1);
+    } else {
+      room.selectedObjectIds.push(obj.id);
+    }
+    if (room.selectedObjectIds.length === 0) {
       room.selectedObjectId = null;
-      refreshSelectionUI();
-      draw();
+    } else {
+      room.selectedObjectId = obj.id; // dernier cliqué = “actif”
     }
+  }
+
+  refreshSelectionUI();
+  draw();
+}
+
+
+function deleteSelectedObject() {
+  if (currentPageIndex === 0 || currentPageIndex === MANUAL_PAGE_INDEX) return;
+  if (interactionMode !== 'object') return;
+
+  const room = getCurrentRoom();
+  const ids = getSelectedObjectIds(room);
+  if (!ids.length) return;
+
+  pushUndoState();
+  const idSet = new Set(ids);
+  room.objects = room.objects.filter(o => !idSet.has(o.id));
+  room.selectedObjectId = null;
+  room.selectedObjectIds = [];
+  refreshSelectionUI();
+  draw();
+}
 
     function deleteSelectedDisposition() {
       if (currentPageIndex === 0 || currentPageIndex === MANUAL_PAGE_INDEX) return;
@@ -1516,24 +1601,19 @@ case 'blocPodium':      return { wM: 1.5, hM: 1 };
       setStatus("Disposition supprimée (Ctrl+Z pour annuler).");
     }
 
-    function selectObject(obj) {
-      if (currentPageIndex === 0 || currentPageIndex === MANUAL_PAGE_INDEX) return;
-      const room = getCurrentRoom();
-      room.selectedObjectId = obj ? obj.id : null;
-      refreshSelectionUI();
-      draw();
-    }
+    
 
     // =========================
     //  UNDO
     // =========================
 
-    function cloneState(room) {
-      return {
-        objects: room.objects.map(o => ({ ...o })),
-        selectedObjectId: room.selectedObjectId
-      };
-    }
+function cloneState(room) {
+  return {
+    objects: room.objects.map(o => ({ ...o })),
+    selectedObjectId: room.selectedObjectId,
+    selectedObjectIds: room.selectedObjectIds ? [...room.selectedObjectIds] : []
+  };
+}
 
     function pushUndoState() {
       if (currentPageIndex === 0 || currentPageIndex === MANUAL_PAGE_INDEX) return;
@@ -1552,6 +1632,7 @@ case 'blocPodium':      return { wM: 1.5, hM: 1 };
       const prev = room.undoStack.pop();
       room.objects         = prev.objects;
       room.selectedObjectId= prev.selectedObjectId;
+room.selectedObjectIds = prev.selectedObjectIds || [];
       refreshSelectionUI();
       draw();
       setStatus("Action annulée.");
@@ -1650,10 +1731,11 @@ case 'blocPodium':      return { wM: 1.5, hM: 1 };
         angleDeg: templatePlacementAngleDeg
       };
 
-      const room2 = getCurrentRoom();
-      room2.selectedObjectId = null;
-      refreshSelectionUI();
-      draw();
+const room2 = getCurrentRoom();
+room2.selectedObjectId = null;
+room2.selectedObjectIds = [];
+refreshSelectionUI();
+draw();
       setStatus('Disposition placée (orientation ' + templatePlacementAngleDeg + '°, Ctrl+Z pour annuler le placement).');
     }
 
@@ -1853,21 +1935,31 @@ case 'blocPodium':      return { wM: 1.5, hM: 1 };
         return;
       }
 
-      const obj = findObjectAtPixel(xPx, yPx);
-      mouseDownOnObject = obj;
+const obj = findObjectAtPixel(xPx, yPx);
+mouseDownOnObject = obj;
 
-      if (obj) {
-        pushUndoState();
-        selectObject(obj);
-        isDragging = true;
-        const centerPx = pixelsFromMeters(obj.xM, obj.yM);
-        const dxPx     = xPx - centerPx.xPx;
-        const dyPx     = yPx - centerPx.yPx;
-        dragOffsetXM   = dxPx / scaleX;
-        dragOffsetYM   = dyPx / scaleY;
-      } else {
-        isDragging = false;
-      }
+if (obj) {
+  const multi = e.ctrlKey || e.metaKey;   // Ctrl+clic => multi-sélection
+  pushUndoState();
+  selectObject(obj, { multi });
+
+  const room = getCurrentRoom();
+  const stillSelected =
+    (room.selectedObjectId === obj.id) ||
+    (room.selectedObjectIds && room.selectedObjectIds.includes(obj.id));
+
+  if (stillSelected) {
+    isDragging = true;
+    const posM = metersFromPixels(xPx, yPx);
+    lastMouseXM = posM.xM;
+    lastMouseYM = posM.yM;
+  } else {
+    // objet désélectionné par toggle => pas de drag
+    isDragging = false;
+  }
+} else {
+  isDragging = false;
+}
     });
 
     canvas.addEventListener('mousemove', (e) => {
@@ -1908,18 +2000,28 @@ case 'blocPodium':      return { wM: 1.5, hM: 1 };
         }
       }
 
-      if (interactionMode === 'object') {
-        const room = getCurrentRoom();
-        if (isDragging && room.selectedObjectId != null) {
-          const obj = room.objects.find(o => o.id === room.selectedObjectId);
-          if (obj) {
-            const posM = metersFromPixels(xPx, yPx);
-            obj.xM = posM.xM - dragOffsetXM;
-            obj.yM = posM.yM - dragOffsetYM;
-            draw();
-          }
-        }
+if (interactionMode === 'object') {
+  const room   = getCurrentRoom();
+  const selIds = getSelectedObjectIds(room);
+
+  if (isDragging && selIds.length) {
+    const posM = metersFromPixels(xPx, yPx);
+    const dx   = posM.xM - lastMouseXM;
+    const dy   = posM.yM - lastMouseYM;
+
+    if (dx !== 0 || dy !== 0) {
+      const idSet = new Set(selIds);
+      for (const o of room.objects) {
+        if (!idSet.has(o.id)) continue;
+        o.xM += dx;
+        o.yM += dy;
       }
+      lastMouseXM = posM.xM;
+      lastMouseYM = posM.yM;
+      draw();
+    }
+  }
+}
     });
 
     canvas.addEventListener('mouseup', (e) => {
@@ -2002,10 +2104,11 @@ case 'blocPodium':      return { wM: 1.5, hM: 1 };
     });
 
     modeDispoBtn?.addEventListener('click', () => {
-      interactionMode = 'dispo';
-      const room = getCurrentRoom();
-      room.selectedObjectId = null;
-      refreshSelectionUI();
+  interactionMode = 'dispo';
+  const room = getCurrentRoom();
+  room.selectedObjectId = null;
+  room.selectedObjectIds = [];
+  refreshSelectionUI();
       movingGroupActive = false;
       activeGroupId     = null;
       updateModeUI();
@@ -2032,6 +2135,7 @@ case 'blocPodium':      return { wM: 1.5, hM: 1 };
       pushUndoState();
       room.objects         = [];
       room.selectedObjectId= null;
+room.selectedObjectIds = [];
 
       for (const gid in dispositionGroups) {
         if (dispositionGroups[gid].roomIndex === currentRoomIndex) {
