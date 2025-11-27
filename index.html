@@ -1070,20 +1070,23 @@ case 'blocPodium':      return { wM: 1.5, hM: 1 };
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Page 0 : légende
-      if (currentPageIndex === 0) {
-        ctx.fillStyle = '#f0f0f0';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+// Page 0 : afficher simplement 00.png
+if (currentPageIndex === 0) {
+  if (!window.legendImage00) {
+    window.legendImage00 = new Image();
+    window.legendImage00.src = "00.png";
+    window.legendImage00.onload = () => draw();
+  }
 
-        ctx.fillStyle = '#000';
-        ctx.font = '96px sans-serif';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        ctx.fillText("Légende des objets :", 80, 60);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        drawLegend();
-        return;
-      }
+  if (window.legendImage00.complete) {
+    ctx.drawImage(window.legendImage00, 0, 0, canvas.width, canvas.height);
+  }
+
+  return;
+}
 
       // Page manuel
       if (currentPageIndex === MANUAL_PAGE_INDEX) {
@@ -2248,20 +2251,25 @@ room.selectedObjectIds = [];
     });
 
     exportLegendBtn?.addEventListener('click', () => {
-      if (currentPageIndex !== 0) {
-        switchPage(0);
-      }
-      draw();
-      const dataURL = canvas.toDataURL('image/png');
-      const name    = 'legende_objets.png';
-      const link    = document.createElement('a');
-      link.href     = dataURL;
-      link.download = name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setStatus("Légende exportée (PNG téléchargé).");
-    });
+  const img = window.legendImage00 || new Image();
+  img.src = "00.png";
+
+  img.onload = () => {
+    const off = document.createElement('canvas');
+    off.width = img.width;
+    off.height = img.height;
+    const c = off.getContext('2d');
+    c.drawImage(img, 0, 0);
+
+    const link = document.createElement('a');
+    link.href = off.toDataURL('image/png');
+    link.download = 'legende_objets.png';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+});
+
 
     exportTemplatesBtn?.addEventListener('click', () => {
       if (!templates || templates.length === 0) {
@@ -2857,7 +2865,7 @@ room.selectedObjectIds = [];
         movingGroupActive        = false;
         activeGroupId            = null;
 
-        canvas.width  = 5000;
+        canvas.width  = 2000;
         canvas.height = 3200;
 
         scaleX = canvas.width / DEFAULT_WIDTH_M;
