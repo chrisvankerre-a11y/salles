@@ -2371,6 +2371,26 @@ room.selectedObjectIds = [];
       reader.readAsText(file, 'utf-8');
     });
 
+// Formatage des dates en JJ/MM/AAAA
+function formatDateFR(isoDate) {
+  if (!isoDate) return '';
+  const parts = isoDate.split('-');
+  if (parts.length !== 3) return isoDate;
+  const [y, m, d] = parts;
+  return d + '/' + m + '/' + y;
+}
+
+// Formatage des datetime-local en JJ/MM/AAAA HH:MM
+function formatDateTimeFR(isoDateTime) {
+  if (!isoDateTime) return '';
+  const [datePart, timePart] = isoDateTime.split('T');
+  const dateStr = formatDateFR(datePart);
+  if (!timePart) return dateStr;
+  const hhmm = timePart.slice(0, 5); // HH:MM
+  return dateStr + ' ' + hhmm;
+}
+
+
     exportParamsPngBtn?.addEventListener('click', () => {
       if (currentPageIndex === 0 || currentPageIndex === MANUAL_PAGE_INDEX) {
         setStatus("Choisir une salle pour exporter salle + paramètres.");
@@ -2439,14 +2459,15 @@ room.selectedObjectIds = [];
         paramsY += gap;
       }
 
-      const infoLines = [
-        ['Groupe / événement',   ev.title  || ''],
-        ["Date de l'événement",  ev.date   || ''],
-        ['Heure de début',       ev.start  || ''],
-        ['Heure de fin',         ev.end    || ''],
-        ['Minutes de battement', ev.buffer || ''],
-        ['Prêt pour',            ev.ready  || '']
-      ];
+   const infoLines = [
+  ['Groupe / événement',   ev.title  || ''],
+  ["Date de l'événement",  formatDateFR(ev.date || '')],
+  ['Heure de début',       ev.start  || ''],
+  ['Heure de fin',         ev.end    || ''],
+  ['Minutes de battement', ev.buffer || ''],
+  ['Prêt pour',            formatDateTimeFR(ev.ready || '')]
+];
+
 
       const hasInfo = infoLines.some(([_, v]) => v && String(v).trim().length);
 
@@ -2492,23 +2513,21 @@ room.selectedObjectIds = [];
       }
 
       if (params.others && params.others.length) {
-        const othersYes = params.others.filter(it =>
-          it.value === 'oui' || it.value === 'always'
-        );
+  const othersList = params.others;
 
-        if (othersYes.length) {
-          paramsY += 80;
-          c2.font = '72px sans-serif';
-          c2.fillText('Autres éléments', paramsX, paramsY);
-          paramsY += 80;
+  paramsY += 80;
+  c2.font = '72px sans-serif';
+  c2.fillText('Autres éléments', paramsX, paramsY);
+  paramsY += 80;
 
-          othersYes.forEach((it) => {
-            const label = it.label || 'Élément';
-            const val = (it.value === 'always') ? '' : 'Oui';
-            drawLine(label, val);
-          });
-        }
-      }
+  // Tous les éléments ajoutés apparaissent systématiquement
+  othersList.forEach((it) => {
+    const label = it.label || 'Élément';
+    const val = 'Oui'; // ou autre texte si tu préfères
+    drawLine(label, val);
+  });
+}
+
 
       const objectCounts = {};
       if (room.objects && Array.isArray(room.objects)) {
