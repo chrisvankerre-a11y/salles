@@ -1251,14 +1251,20 @@ if (interactionMode === 'object') {
         context.moveTo(0, 0);
         context.lineTo(wPx / 2, 0);
         context.stroke();
-      } else if (obj.type === 'chair') {
-        context.strokeStyle = '#000';
-        const seatW = wPx * 0.8;
-        const seatH = hPx * 0.6;
-        const backH = hPx * 0.25;
-        context.strokeRect(-seatW / 2, -seatH / 2, seatW, seatH);
-        context.strokeRect(-seatW / 2, -seatH / 2 - backH, seatW, backH);
-      } else if (obj.type === 'tablePoker') {
+    } else if (obj.type === 'chair') {
+  context.strokeStyle = '#000';
+
+  // chaise qui occupe toute la boîte wPx x hPx
+  const seatH = hPx * 0.6;
+  const backH = hPx * 0.4;
+
+  // siège : bas
+  context.strokeRect(-wPx / 2, -seatH / 2 + backH / 2, wPx, seatH);
+
+  // dossier : en haut
+  context.strokeRect(-wPx / 2, -hPx / 2, wPx, backH);
+}
+ else if (obj.type === 'tablePoker') {
         context.fillStyle   = '#e0f2f1';
         context.strokeStyle = '#004d40';
         context.fillRect(-wPx / 2, -hPx / 2, wPx, hPx);
