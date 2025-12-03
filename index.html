@@ -375,7 +375,7 @@
           <legend>Objets</legend>
           <label>Type d'objet :
             <select id="objectType">
- <option value="blocPodium">Bloc de podium 1.5m x 1m</option>
+ <option value="blocPodium">Bloc de podium 2m x 1m</option>
              <option value="chair">Chaise 0.5m x 0.5m</option>
               <option value="deskHotesses">Desk hôtesses 0.9m x 0.5m</option>
               <option value="deskLumineux">Desk lumineux 1.2m x 0.6m</option>
@@ -389,7 +389,7 @@
               <option value="mangeDeboutCarre">Mange-debout carré 0.7m x 0.7m</option>
               <option value="mangeDeboutGris">Mange-debout gris Ø0.85m</option>
               <option value="petitFauteuil">Petit fauteuil 0.7m x 0.65m</option>
-<option value="podium">Podium 6m x 4m</option>
+<option value="podium">Podium 6m x 2m</option>
 <option value="pupitre">Pupitre 0.62m x 0.4m</option>
               <option value="sepGrise">Séparation grise 0.8m x 0.05m</option>
               <option value="sepPkrstrs">Séparation pkrstrs 1m x 0.05m</option>
@@ -969,8 +969,8 @@ let lastMouseYM         = 0;
         case 'initRoulette':     return { wM: 2.5, hM: 1.5 };
         case 'initBlackjack':    return { wM: 2.5, hM: 1.5 };
         case 'upLighter':        return { wM: 0.2, hM: 0.2 };
-case 'podium':          return { wM: 6, hM: 4 };
-case 'blocPodium':      return { wM: 1.5, hM: 1 };
+case 'podium':          return { wM: 6, hM: 2 };
+case 'blocPodium':      return { wM: 2, hM: 1 };
         default:                 return { wM: 1.0, hM: 0.5 };
       }
     }
