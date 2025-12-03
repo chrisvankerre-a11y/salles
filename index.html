@@ -794,7 +794,10 @@ let lastMouseYM         = 0;
     let mouseDownPos     = { xPx: 0, yPx: 0 };
     let dragStarted      = false;
     let isDragging       = false;
-    let dragOffsetXM     = 0;
+      // Guides d'alignement (en mètres, null = pas de guide)
+    let alignmentGuideX = null; // ligne verticale
+    let alignmentGuideY = null; // ligne horizontale
+  let dragOffsetXM     = 0;
     let dragOffsetYM     = 0;
 
     // =========================
@@ -1137,6 +1140,32 @@ if (interactionMode === 'object') {
     }
   }
 }
+
+      // Dessin des guides d'alignement (si présents)
+      if (alignmentGuideX != null || alignmentGuideY != null) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(0, 0, 255, 0.8)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([10, 6]);
+
+        if (alignmentGuideX != null) {
+          const xPx = alignmentGuideX * scaleX;
+          ctx.beginPath();
+          ctx.moveTo(xPx, 0);
+          ctx.lineTo(xPx, canvas.height);
+          ctx.stroke();
+        }
+
+        if (alignmentGuideY != null) {
+          const yPx = alignmentGuideY * scaleY;
+          ctx.beginPath();
+          ctx.moveTo(0, yPx);
+          ctx.lineTo(canvas.width, yPx);
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
 
 
       ctx.save();
@@ -1521,6 +1550,51 @@ function getSelectedObjectIds(room) {
 
   return Array.from(set);
 }
+
+// Calcule les lignes d'alignement lors du déplacement d'une sélection
+function updateAlignmentGuides(room, selectedIds) {
+  alignmentGuideX = null;
+  alignmentGuideY = null;
+
+  if (!selectedIds || !selectedIds.length) return;
+
+  const idSet = new Set(selectedIds);
+
+  // centre moyen de la sélection
+  let sumX = 0, sumY = 0, n = 0;
+  for (const o of room.objects) {
+    if (!idSet.has(o.id)) continue;
+    sumX += o.xM;
+    sumY += o.yM;
+    n++;
+  }
+  if (!n) return;
+
+  const selCx = sumX / n;
+  const selCy = sumY / n;
+
+  // tolérance d'alignement (en mètres)
+  const epsilonM = 0.05; // ≈ 5 cm
+  let bestDx = epsilonM;
+  let bestDy = epsilonM;
+
+  for (const o of room.objects) {
+    if (idSet.has(o.id)) continue; // on ne se compare pas à soi-même
+
+    const dx = Math.abs(o.xM - selCx);
+    if (dx < bestDx) {
+      bestDx = dx;
+      alignmentGuideX = o.xM; // on aligne sur le centre X de cet objet
+    }
+
+    const dy = Math.abs(o.yM - selCy);
+    if (dy < bestDy) {
+      bestDy = dy;
+      alignmentGuideY = o.yM; // on aligne sur le centre Y de cet objet
+    }
+  }
+}
+
 
 
 // options = { multi: bool }  => multi = Ctrl+clic
@@ -2027,6 +2101,17 @@ if (interactionMode === 'object') {
       }
       lastMouseXM = posM.xM;
       lastMouseYM = posM.yM;
+
+      // calcul / mise à jour des guides d'alignement
+      updateAlignmentGuides(room, selIds);
+
+      draw();
+    }
+  } else {
+    // pas de drag actif : pas de guides
+    if (alignmentGuideX != null || alignmentGuideY != null) {
+      alignmentGuideX = null;
+      alignmentGuideY = null;
       draw();
     }
   }
@@ -2064,10 +2149,15 @@ if (interactionMode === 'object') {
         }
       }
 
-      mouseDown        = false;
+         mouseDown        = false;
       isDragging       = false;
       mouseDownOnObject= null;
       dragStarted      = false;
+
+      alignmentGuideX = null;
+      alignmentGuideY = null;
+      draw();
+
     });
 
     canvas.addEventListener('mouseleave', () => {
@@ -2079,6 +2169,10 @@ if (interactionMode === 'object') {
       isDragging       = false;
       mouseDownOnObject= null;
       dragStarted      = false;
+
+      alignmentGuideX = null;
+      alignmentGuideY = null;
+      draw();
     });
 
     // =========================
