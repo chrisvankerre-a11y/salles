@@ -376,7 +376,7 @@
           <label>Type d'objet :
             <select id="objectType">
  <option value="blocPodium">Bloc de podium 2m x 1m</option>
-             <option value="chair">Chaise 0.5m x 0.5m</option>
+             <option value="chair">Chaise 0.45m x 0.45m</option>
               <option value="deskHotesses">Desk hôtesses 0.9m x 0.5m</option>
               <option value="deskLumineux">Desk lumineux 1.2m x 0.6m</option>
               <option value="ecranMobile">Ecran mobile 1.47m x 0.8m</option>
@@ -946,7 +946,7 @@ let lastMouseYM         = 0;
     function getObjectSize(type) {
       switch (type) {
         case 'table':            return { wM: 1.6, hM: 0.8 };
-        case 'chair':            return { wM: 0.5, hM: 0.5 };
+        case 'chair':            return { wM: 0.45, hM: 0.45 };
         case 'tablePoker':       return { wM: 2.5, hM: 1.25 };
         case 'flipchart':        return { wM: 0.6, hM: 0.6 };
         case 'deskHotesses':     return { wM: 0.9, hM: 0.5 };
