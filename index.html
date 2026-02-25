@@ -195,136 +195,205 @@
     <!-- PAGE MANUEL DÉTAILLÉ (dernière page) -->
     <div id="manualPanel" style="display:none;">
       <fieldset>
-        <legend>Mode d'emploi détaillé</legend>
+<legend>Mode d'emploi</legend>
 
-        <h4>Structure des pages</h4>
-        <ul>
-          <li><strong>Page 0</strong> : légende des objets.</li>
-          <li><strong>Pages 1 à 15</strong> : salles River Flow → Casino Club (+ 3 salles génériques).</li>
-          <li><strong>Page 16</strong> : ce mode d’emploi détaillé.</li>
-        </ul>
+<h4>1. À quoi sert cet outil ?</h4>
+<p>
+Cet outil permet de préparer l’aménagement des salles pour vos événements.
+Vous pouvez positionner du mobilier, créer des configurations types (dispositions),
+renseigner les informations d’un événement et exporter un document prêt à imprimer.
+Aucune connaissance technique n’est nécessaire.
+</p>
 
-        <h4>Navigation</h4>
-        <ul>
-          <li>Flèches gauche/droite du clavier : page précédente / suivante.</li>
-          <li>Boutons ◀ / ▶ en bas à droite : même fonction.</li>
-          <li>Table des matières (colonne de gauche) : accès direct à une page.</li>
-        </ul>
+<h4>2. Organisation des pages</h4>
+<ul>
+  <li><strong>Page 0</strong> : légende des objets, accès rapide aux salles, export/import des dispositions.</li>
+  <li><strong>Pages 1 à 15</strong> : plans des différentes salles.</li>
+  <li><strong>Page 16</strong> : ce mode d’emploi.</li>
+</ul>
 
-        <h4>Zoom et affichage</h4>
-        <ul>
-          <li>Le curseur de zoom agit uniquement sur les pages de salles (1 à 15).</li>
-          <li>La page 0 (légende) et la page 16 (mode d’emploi) sont affichées en zoom 100&nbsp;% fixe.</li>
-        </ul>
+<p><strong>Navigation :</strong></p>
+<ul>
+  <li>Boutons ◀ ▶ en bas à droite.</li>
+  <li>Flèches gauche / droite du clavier.</li>
+  <li>Table des matières sur la page 0.</li>
+</ul>
 
-        <h4>Placement d’objets (mode « Mode objet »)</h4>
-        <ul>
-          <li>Choisir <strong>Mode objet</strong> dans le panneau « Mode d’édition ».</li>
-          <li>Choisir un <strong>type d’objet</strong> dans la liste (chaise, table, écran, etc.).</li>
-          <li><strong>Clic dans la salle</strong> : crée un nouvel objet de ce type à l’endroit cliqué.</li>
-          <li><strong>Clic sur un objet</strong> : sélection de cet objet.
-            <ul>
-              <li>Glisser-déposer = déplacement de l’objet.</li>
-              <li>Boutons de rotation = rotation de l’objet sélectionné.</li>
-              <li><strong>Touche Suppr / Delete</strong> = suppression de l’objet sélectionné.</li>
-            </ul>
-          </li>
-          <li><strong>Ctrl+Z</strong> : annule la dernière action sur la salle courante (déplacement, création, suppression, etc.).</li>
-        </ul>
+<h4>3. Créer un aménagement (Mode objet)</h4>
 
-        <h4>Dispositions types (mode « Mode dispo »)</h4>
-        <ul>
-          <li>Enregistrer la disposition actuelle avec un nom (bouton <strong>«&nbsp;Enregistrer la disposition actuelle&nbsp;»</strong>).</li>
-          <li>Choisir ensuite une disposition dans la liste pour <strong>passer en mode placement de dispo</strong>.</li>
-          <li>En mode placement de dispo :
-            <ul>
-              <li><strong>Clic dans la salle</strong> : place la disposition complète à l’endroit cliqué
-                (le point de référence est l’objet le plus haut de la disposition).</li>
-            </ul>
-          </li>
-          <li>En <strong>mode dispo</strong> sur une salle où une disposition existe déjà :
-            <ul>
-              <li><strong>Clic sur un objet</strong> appartenant à une disposition : sélectionne cette disposition.</li>
-              <li><strong>Glisser-déposer</strong> après ce clic : déplace la disposition entière en un seul bloc.</li>
-              <li>Les boutons de rotation « Dispo sélectionnée » agissent sur la dernière disposition sélectionnée.</li>
-              <li><strong>Touche Suppr / Delete</strong> : supprime complètement la disposition sélectionnée (tous les objets du groupe).</li>
-            </ul>
-          </li>
-          <li><strong>Ctrl+Z</strong> permet d’annuler un placement, un déplacement ou une suppression de disposition.</li>
-        </ul>
+<p><strong>Étape 1 : Activer le Mode objet</strong><br>
+Cliquez sur <strong>Mode objet</strong> dans le panneau de gauche.
+</p>
 
-        <h4>Paramètres de salle et échelle</h4>
-        <ul>
-          <li>Dans la section <strong>«&nbsp;Salle&nbsp;»</strong>, la largeur réelle (en mètres) est utilisée pour calculer l’échelle du plan.</li>
-          <li>Pour les salles 1 à 12, cette largeur est fixée (voir tableau plus bas) et n’est pas modifiable.</li>
-          <li>Pour les salles 13 à 15, la largeur est éditable : la hauteur est recalculée automatiquement à partir du ratio de l’image.</li>
-        </ul>
+<p><strong>Étape 2 : Placer un objet</strong></p>
+<ul>
+  <li>Choisissez un type d’objet (chaise, table, écran, pupitre, etc.).</li>
+  <li>Cliquez dans la salle pour le placer.</li>
+</ul>
 
-        <h4>Paramètres divers et informations d’événement</h4>
-        <ul>
-          <li>L’onglet <strong>«&nbsp;Paramètres divers&nbsp;»</strong> permet de décrire l’équipement :
-            écran, flipchart, micro, multiprise, up-lighters, parois, etc.</li>
-          <li>La zone <strong>«&nbsp;Remarques&nbsp;»</strong> permet d’ajouter toute information libre.</li>
-          <li>Les champs d’<strong>événement</strong> permettent de renseigner :
-            <ul>
-              <li>le nom du groupe / de l’événement,</li>
-              <li>la date de l’événement,</li>
-              <li>l’heure de début et l’heure de fin (avec éventuelles minutes de battement),</li>
-              <li>la date et l’heure auxquelles tout doit être prêt et opérationnel.</li>
-            </ul>
-          </li>
-        </ul>
+<p><strong>Étape 3 : Déplacer un objet</strong></p>
+<ul>
+  <li>Cliquez sur l’objet pour le sélectionner.</li>
+  <li>Maintenez le clic et glissez-le à l’endroit souhaité.</li>
+</ul>
 
-        <h4>Export des plans et des paramètres</h4>
-        <ul>
-          <li><strong>Export en PNG</strong> (onglet «&nbsp;Aménagement de la salle&nbsp;») :
-            exporte uniquement le plan (image de la salle + objets).</li>
-          <li><strong>Exporter la légende en PNG</strong> (page 0) :
-            exporte la légende des objets sur un grand canevas.</li>
-          <li><strong>Exporter paramètres + salle en PNG</strong> :
-            génère un A4 horizontal avec :
-            <ul>
-              <li>la salle (plan) à gauche,</li>
-              <li>tous les paramètres, les infos d’événement et les remarques à droite,</li>
-              <li>des tailles de texte augmentées pour faciliter la lecture et l’impression.</li>
-            </ul>
-          </li>
-        </ul>
+<p><strong>Étape 4 : Rotation</strong></p>
+<ul>
+  <li>Sélectionnez l’objet.</li>
+  <li>Utilisez les boutons de rotation pour l’orienter.</li>
+</ul>
 
-        <h4>Largeurs par défaut des 12 salles prédéfinies</h4>
-        <p>
-          Ces valeurs sont les largeurs réelles (m) utilisées automatiquement
-          pour le calcul d’échelle. Elles ne sont pas modifiables pour les 12 premières salles.
-        </p>
-        <table style="width:100%; border-collapse:collapse; font-size:13px;">
-          <thead>
-            <tr>
-              <th style="border-bottom:1px solid #ccc; text-align:left;">Salle</th>
-              <th style="border-bottom:1px solid #ccc; text-align:right;">Largeur par défaut (m)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>1 – River Flow</td><td style="text-align:right;">10.5</td></tr>
-            <tr><td>2 – River</td><td style="text-align:right;">8.5</td></tr>
-            <tr><td>3 – Flow</td><td style="text-align:right;">10.5</td></tr>
-            <tr><td>4 – Bounty</td><td style="text-align:right;">8</td></tr>
-            <tr><td>5 – Yacht Club</td><td style="text-align:right;">12.5</td></tr>
-            <tr><td>6 – Terrasse Yacht Club</td><td style="text-align:right;">21</td></tr>
-            <tr><td>7 – Coffie Corner</td><td style="text-align:right;">15</td></tr>
-            <tr><td>8 – Blue Ocean</td><td style="text-align:right;">21</td></tr>
-            <tr><td>9 – Blue Ocean &amp; couloir</td><td style="text-align:right;">25</td></tr>
-            <tr><td>10 – Blue</td><td style="text-align:right;">21,5</td></tr>
-            <tr><td>11 – Ocean</td><td style="text-align:right;">10</td></tr>
-            <tr><td>12 – Casino Club</td><td style="text-align:right;">35</td></tr>
-          </tbody>
-        </table>
+<p><strong>Étape 5 : Supprimer un objet</strong></p>
+<ul>
+  <li>Sélectionnez l’objet.</li>
+  <li>Appuyez sur la touche <strong>Suppr</strong>.</li>
+</ul>
 
-        <h4>Salles 13 à 15</h4>
-        <p>
-          Pour les salles 13, 14 et 15, la largeur est éditable dans la section «&nbsp;Salle&nbsp;» :
-          le programme recalcule automatiquement la hauteur à partir du ratio de l’image.
-        </p>
-      </fieldset>
+<p><strong>Sélection multiple :</strong></p>
+<ul>
+  <li>Maintenez <strong>Ctrl</strong> en cliquant sur plusieurs objets.</li>
+  <li>Vous pouvez ensuite les déplacer ensemble.</li>
+</ul>
+
+<p><strong>Annuler une action :</strong><br>
+Utilisez <strong>Ctrl + Z</strong>.
+</p>
+
+<h4>4. Utiliser une disposition type (Mode dispo)</h4>
+
+<p>
+Une <strong>disposition</strong> permet d’enregistrer un aménagement complet
+pour le replacer rapidement (ex : « Théâtre », « U », « Cocktail », etc.).
+</p>
+
+<p><strong>Enregistrer une disposition :</strong></p>
+<ul>
+  <li>Créez votre aménagement (objets placés comme souhaité).</li>
+  <li>Donnez-lui un nom.</li>
+  <li>Cliquez sur <strong>Enregistrer la disposition actuelle</strong>.</li>
+</ul>
+
+<p><strong>Placer une disposition :</strong></p>
+<ul>
+  <li>Cliquez sur <strong>Mode dispo</strong>.</li>
+  <li>Sélectionnez une disposition dans la liste.</li>
+  <li>Cliquez dans la salle pour la placer.</li>
+</ul>
+
+<p><strong>Déplacer une disposition :</strong></p>
+<ul>
+  <li>En mode dispo, cliquez sur un élément de la disposition pour la sélectionner.</li>
+  <li>Glissez pour déplacer tout l’ensemble.</li>
+</ul>
+
+<p><strong>Tourner une disposition :</strong></p>
+<ul>
+  <li>Utilisez les boutons « Dispo sélectionnée » pour tourner l’ensemble.</li>
+</ul>
+
+<p><strong>Supprimer une disposition :</strong></p>
+<ul>
+  <li>Sélectionnez-la en cliquant sur un de ses éléments.</li>
+  <li>Appuyez sur <strong>Suppr</strong> pour supprimer toute la disposition.</li>
+</ul>
+
+<p><strong>Annuler (dispositions) :</strong><br>
+Utilisez <strong>Ctrl + Z</strong> pour annuler un placement, un déplacement, une rotation ou une suppression.
+</p>
+
+<h4>5. IMPORTANT : exporter vos dispositions (page 0)</h4>
+
+<p>
+Les dispositions que vous enregistrez sont mémorisées sur <strong>cet ordinateur</strong>.
+Il est <strong>très important</strong> de les exporter régulièrement depuis la <strong>page 0</strong>
+(bouton <strong>Exporter les dispositions</strong>).
+</p>
+
+<p><strong>Pourquoi c’est important ?</strong></p>
+<ul>
+  <li><strong>Partager</strong> : vous pouvez transmettre vos dispositions à d’autres utilisateurs
+      (ils pourront les importer sur leur ordinateur).</li>
+  <li><strong>Sécuriser</strong> : en cas de perte de mémoire sur l’ordinateur (nettoyage, changement de poste,
+      navigateur réinitialisé, etc.), vous pourrez <strong>réimporter</strong> vos dispositions et les récupérer.</li>
+</ul>
+
+<p><strong>Conseil :</strong> gardez le fichier exporté dans un endroit sûr (dossier partagé, clé USB, etc.).</p>
+
+<h4>6. Zoom</h4>
+<ul>
+  <li>Le curseur de zoom permet d’agrandir ou réduire l’affichage de la salle.</li>
+  <li>Le zoom ne change pas les dimensions réelles : il sert uniquement au confort de lecture.</li>
+</ul>
+
+<h4>7. Paramètres et informations d’événement</h4>
+
+<p><strong>Paramètres techniques :</strong></p>
+<ul>
+  <li>Indiquez la présence d’un écran, micro, flipchart, multiprise, up-lighters, etc.</li>
+  <li>Précisez si les parois sont ouvertes ou fermées (si applicable).</li>
+  <li>Vous pouvez ajouter d’autres éléments via « Autres éléments ».</li>
+</ul>
+
+<p><strong>Informations événement :</strong></p>
+<ul>
+  <li>Nom du groupe ou de l’événement.</li>
+  <li>Date.</li>
+  <li>Heure de début et de fin.</li>
+  <li>Minutes de battement (facultatif).</li>
+  <li>Date/heure à laquelle tout doit être prêt.</li>
+  <li>Remarques complémentaires.</li>
+</ul>
+
+<h4>8. Export (pour impression)</h4>
+
+<ul>
+  <li><strong>Exporter en PNG</strong> : exporte uniquement le plan de la salle (image + objets).</li>
+  <li><strong>Exporter la légende en PNG</strong> (page 0) : exporte la légende des objets.</li>
+  <li><strong>Exporter paramètres + salle en PNG</strong> :
+      génère un document A4 horizontal prêt à imprimer, avec le plan à gauche
+      et les informations (paramètres + événement + remarques) à droite.</li>
+</ul>
+
+<h4>9. Conseils d’utilisation</h4>
+<ul>
+  <li>Commencez par placer une disposition type si elle existe, puis ajustez en mode objet.</li>
+  <li>Renseignez les informations d’événement avant export.</li>
+  <li>Utilisez Ctrl + Z en cas d’erreur.</li>
+  <li><strong>Pensez à exporter vos dispositions</strong> (page 0) pour pouvoir les partager et les récupérer si besoin.</li>
+</ul>
+
+<h4>10. Utiliser les pages 13, 14 et 15</h4>
+
+<p>
+Les pages <strong>13, 14 et 15</strong> permettent de charger
+le <strong>plan de la salle de votre choix</strong> (image).
+</p>
+
+<p><strong>Comment faire :</strong></p>
+<ul>
+  <li>Allez sur la page 13, 14 ou 15.</li>
+  <li>Dans la section <strong>Salle</strong>, cliquez sur <strong>Image de la salle</strong> et sélectionnez votre fichier.</li>
+  <li>Renseignez ensuite la <strong>largeur réelle (en mètres)</strong>.</li>
+  <li>Cliquez sur <strong>Appliquer la largeur</strong>.</li>
+</ul>
+
+<p><strong>IMPORTANT : bien renseigner la largeur (en mètres)</strong></p>
+<p>
+La valeur “Largeur réelle” doit correspondre à la <strong>largeur totale représentée par l’image</strong>.
+L’outil met à l’échelle <strong>toute l’image</strong> que vous avez chargée.
+</p>
+
+<ul>
+  <li>Si votre image contient des <strong>bords perdus / marges / zones blanches</strong> autour du plan,
+      vous devez <strong>les inclure</strong> dans la largeur (puisqu’ils font partie de l’image utilisée pour l’échelle).</li>
+  <li>Si vous ne voulez pas inclure ces marges, il faut <strong>recadrer l’image</strong> avant de la charger,
+      puis renseigner la largeur correspondant à l’image recadrée.</li>
+</ul>
+
+<p>
+Une largeur incorrecte faussera la taille apparente des objets (tables, chaises, etc.).
+Vérifiez donc cette valeur avant de commencer l’aménagement.
+</p>      </fieldset>
     </div>
 
     <!-- PANNEAU EDITEUR (pages 1..15) -->
