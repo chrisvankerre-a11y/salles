@@ -472,6 +472,10 @@ Vérifiez donc cette valeur avant de commencer l’aménagement.
               <option value="upLighter">Up-lighter Ø0.2m</option>
             </select>
           </label>
+          <label style="margin-top:6px;">
+            <input type="checkbox" id="preventOverlapCheckbox">
+            Empêcher le chevauchement des objets
+          </label>
         </fieldset>
 
         <!-- PANEL OBJET SÉLECTIONNÉ (mode objet) -->
@@ -649,6 +653,7 @@ Vérifiez donc cette valeur avant de commencer l’aménagement.
     const zoomLabel             = document.getElementById('zoomLabel');
 
     const objectTypeSelect      = document.getElementById('objectType');
+    const preventOverlapCheckbox= document.getElementById('preventOverlapCheckbox');
 
     const rotateMinusBtn        = document.getElementById('rotateMinus');
     const rotatePlusBtn         = document.getElementById('rotatePlus');
@@ -858,6 +863,8 @@ let lastMouseYM         = 0;
 
     let isDrawingLegend = false;
 
+    let preventOverlap = false;
+
     let mouseDown        = false;
     let mouseDownOnObject= null;
     let mouseDownPos     = { xPx: 0, yPx: 0 };
@@ -939,6 +946,67 @@ let lastMouseYM         = 0;
 
     function setStatus(msg) {
       statusDiv.textContent = msg || '';
+    }
+
+    function getObjectAABB(obj) {
+      const angleRad = (obj.angleDeg || 0) * Math.PI / 180;
+      const cos = Math.cos(angleRad);
+      const sin = Math.sin(angleRad);
+      const hx = obj.wM / 2;
+      const hy = obj.hM / 2;
+      const corners = [
+        { x: -hx, y: -hy },
+        { x:  hx, y: -hy },
+        { x:  hx, y:  hy },
+        { x: -hx, y:  hy }
+      ].map(p => ({
+        x: obj.xM + p.x * cos - p.y * sin,
+        y: obj.yM + p.x * sin + p.y * cos
+      }));
+
+      return {
+        minX: Math.min(...corners.map(p => p.x)),
+        maxX: Math.max(...corners.map(p => p.x)),
+        minY: Math.min(...corners.map(p => p.y)),
+        maxY: Math.max(...corners.map(p => p.y))
+      };
+    }
+
+    function objectsOverlap(a, b) {
+      const aa = getObjectAABB(a);
+      const bb = getObjectAABB(b);
+      return !(aa.maxX <= bb.minX || aa.minX >= bb.maxX || aa.maxY <= bb.minY || aa.minY >= bb.maxY);
+    }
+
+    function wouldOverlapAny(candidateObjects, roomObjects, ignoreIds = new Set()) {
+      for (const cand of candidateObjects) {
+        for (const other of roomObjects) {
+          if (ignoreIds.has(other.id)) continue;
+          if (objectsOverlap(cand, other)) return true;
+        }
+      }
+
+      for (let i = 0; i < candidateObjects.length; i++) {
+        for (let j = i + 1; j < candidateObjects.length; j++) {
+          if (objectsOverlap(candidateObjects[i], candidateObjects[j])) return true;
+        }
+      }
+
+      return false;
+    }
+
+    function isObjectInsideRoom(obj, room) {
+      const aabb = getObjectAABB(obj);
+      return (
+        aabb.minX >= 0 &&
+        aabb.minY >= 0 &&
+        aabb.maxX <= room.roomWidthMeters &&
+        aabb.maxY <= room.roomHeightMeters
+      );
+    }
+
+    function areObjectsInsideRoom(candidateObjects, room) {
+      return candidateObjects.every(obj => isObjectInsideRoom(obj, room));
     }
 
     function showHomeUI() {
@@ -1813,6 +1881,19 @@ room.selectedObjectIds = prev.selectedObjectIds || [];
         hM,
         angleDeg: 0
       };
+
+      if (!isObjectInsideRoom(obj, room)) {
+        room.undoStack.pop();
+        setStatus("Placement impossible : l'objet ne peut pas sortir de l'image.");
+        return;
+      }
+
+      if (preventOverlap && wouldOverlapAny([obj], room.objects)) {
+        room.undoStack.pop();
+        setStatus("Placement impossible : chevauchement.");
+        return;
+      }
+
       room.objects.push(obj);
       selectObject(obj);
     }
@@ -1842,25 +1923,47 @@ room.selectedObjectIds = prev.selectedObjectIds || [];
       const cosA     = Math.cos(angleRad);
       const sinA     = Math.sin(angleRad);
 
-      pushUndoState();
-
-      const placedIds = [];
-      const groupId   = nextGroupId++;
-
+      const candidateObjects = [];
       for (const o of tpl.objects) {
         const relX = o.xM - anchorObj.xM;
         const relY = o.yM - anchorObj.yM;
         const rotX = relX * cosA - relY * sinA;
         const rotY = relX * sinA + relY * cosA;
 
-        const newObj = {
-          id: room.nextObjectId++,
+        candidateObjects.push({
           type: o.type,
           xM: clickXM + rotX,
           yM: clickYM + rotY,
           wM: o.wM,
           hM: o.hM,
-          angleDeg: (o.angleDeg + templatePlacementAngleDeg) % 360,
+          angleDeg: (o.angleDeg + templatePlacementAngleDeg) % 360
+        });
+      }
+
+      if (!areObjectsInsideRoom(candidateObjects, room)) {
+        setStatus("Placement impossible : un objet sortirait de l'image.");
+        return;
+      }
+
+      if (preventOverlap && wouldOverlapAny(candidateObjects, room.objects)) {
+        setStatus("Placement impossible : chevauchement.");
+        return;
+      }
+
+      pushUndoState();
+
+      const placedIds = [];
+      const groupId   = nextGroupId++;
+
+      for (const candidate of candidateObjects) {
+        const newObj = {
+          id: room.nextObjectId++,
+          type: candidate.type,
+          xM: candidate.xM,
+          yM: candidate.yM,
+          wM: candidate.wM,
+          hM: candidate.hM,
+          angleDeg: candidate.angleDeg,
           groupId: groupId
         };
         room.objects.push(newObj);
@@ -1915,8 +2018,6 @@ draw();
         return;
       }
 
-      pushUndoState();
-
       let sumX = 0, sumY = 0;
       for (const o of groupObjs) {
         sumX += o.xM;
@@ -1929,15 +2030,42 @@ draw();
       const cosA = Math.cos(angleRad);
       const sinA = Math.sin(angleRad);
 
-      for (const o of groupObjs) {
+      const rotatedCandidates = groupObjs.map(o => {
         const dx = o.xM - cx;
         const dy = o.yM - cy;
         const rx = dx * cosA - dy * sinA;
         const ry = dx * sinA + dy * cosA;
-        o.xM = cx + rx;
-        o.yM = cy + ry;
-        o.angleDeg = (o.angleDeg + deltaDeg) % 360;
-        if (o.angleDeg < 0) o.angleDeg += 360;
+        let angleDeg = (o.angleDeg + deltaDeg) % 360;
+        if (angleDeg < 0) angleDeg += 360;
+        return {
+          ...o,
+          xM: cx + rx,
+          yM: cy + ry,
+          angleDeg
+        };
+      });
+
+      if (!areObjectsInsideRoom(rotatedCandidates, room)) {
+        setStatus("Rotation impossible : un objet sortirait de l'image.");
+        return;
+      }
+
+      if (!areObjectsInsideRoom(rotatedCandidates, room)) {
+        setStatus("Rotation impossible : un objet sortirait de l'image.");
+        return;
+      }
+
+      if (preventOverlap && wouldOverlapAny(rotatedCandidates, room.objects, idSet)) {
+        setStatus("Rotation impossible : chevauchement.");
+        return;
+      }
+
+      pushUndoState();
+
+      for (let i = 0; i < groupObjs.length; i++) {
+        groupObjs[i].xM = rotatedCandidates[i].xM;
+        groupObjs[i].yM = rotatedCandidates[i].yM;
+        groupObjs[i].angleDeg = rotatedCandidates[i].angleDeg;
       }
 
       let newAngle = (lastPlacedGroupInfo.angleDeg ?? 0) + deltaDeg;
@@ -2139,14 +2267,22 @@ if (obj) {
           if (dx !== 0 || dy !== 0) {
             const room = getCurrentRoom();
             const idSet = new Set(group.ids);
-            for (const o of room.objects) {
-              if (!idSet.has(o.id)) continue;
-              o.xM += dx;
-              o.yM += dy;
+            const candidates = room.objects
+              .filter(o => idSet.has(o.id))
+              .map(o => ({ ...o, xM: o.xM + dx, yM: o.yM + dy }));
+
+            if (!areObjectsInsideRoom(candidates, room)) {
+              setStatus("Déplacement impossible : un objet sortirait de l'image.");
+            } else if (!preventOverlap || !wouldOverlapAny(candidates, room.objects, idSet)) {
+              for (const o of room.objects) {
+                if (!idSet.has(o.id)) continue;
+                o.xM += dx;
+                o.yM += dy;
+              }
+              groupLastMouseXM = posM.xM;
+              groupLastMouseYM = posM.yM;
+              draw();
             }
-            groupLastMouseXM = posM.xM;
-            groupLastMouseYM = posM.yM;
-            draw();
           }
           return;
         }
@@ -2163,18 +2299,26 @@ if (interactionMode === 'object') {
 
     if (dx !== 0 || dy !== 0) {
       const idSet = new Set(selIds);
-      for (const o of room.objects) {
-        if (!idSet.has(o.id)) continue;
-        o.xM += dx;
-        o.yM += dy;
+      const candidates = room.objects
+        .filter(o => idSet.has(o.id))
+        .map(o => ({ ...o, xM: o.xM + dx, yM: o.yM + dy }));
+
+      if (!areObjectsInsideRoom(candidates, room)) {
+        setStatus("Déplacement impossible : un objet sortirait de l'image.");
+      } else if (!preventOverlap || !wouldOverlapAny(candidates, room.objects, idSet)) {
+        for (const o of room.objects) {
+          if (!idSet.has(o.id)) continue;
+          o.xM += dx;
+          o.yM += dy;
+        }
+        lastMouseXM = posM.xM;
+        lastMouseYM = posM.yM;
+
+        // calcul / mise à jour des guides d'alignement
+        updateAlignmentGuides(room, selIds);
+
+        draw();
       }
-      lastMouseXM = posM.xM;
-      lastMouseYM = posM.yM;
-
-      // calcul / mise à jour des guides d'alignement
-      updateAlignmentGuides(room, selIds);
-
-      draw();
     }
   } else {
     // pas de drag actif : pas de guides
@@ -2247,6 +2391,16 @@ if (interactionMode === 'object') {
     // =========================
     //  BOUTONS & FORMULAIRES
     // =========================
+
+    preventOverlapCheckbox?.addEventListener('change', () => {
+      preventOverlap = !!preventOverlapCheckbox.checked;
+      try {
+        localStorage.setItem('preventOverlap', preventOverlap ? 'true' : 'false');
+      } catch {}
+      setStatus(preventOverlap
+        ? "Chevauchement des objets interdit."
+        : "Chevauchement des objets autorisé.");
+    });
 
     panelLayoutBtn?.addEventListener('click', () => {
       editorPanelMode = 'layout';
@@ -2355,41 +2509,43 @@ room.selectedObjectIds = [];
       reader.readAsDataURL(file);
     });
 
-    rotateMinusBtn?.addEventListener('click', () => {
+    function rotateSelectedObjects(deltaDeg) {
       if (currentPageIndex === 0 || currentPageIndex === MANUAL_PAGE_INDEX) return;
       if (interactionMode !== 'object') return;
       const room = getCurrentRoom();
-      if (room.selectedObjectId == null) return;
-      const obj = room.objects.find(o => o.id === room.selectedObjectId);
-      if (!obj) return;
+      const selectedIds = getSelectedObjectIds(room);
+      if (!selectedIds.length) return;
+
+      const idSet = new Set(selectedIds);
+      const selectedObjects = room.objects.filter(o => idSet.has(o.id));
+      const rotatedCandidates = selectedObjects.map(o => {
+        let angleDeg = (o.angleDeg + deltaDeg) % 360;
+        if (angleDeg < 0) angleDeg += 360;
+        return { ...o, angleDeg };
+      });
+
+      if (preventOverlap && wouldOverlapAny(rotatedCandidates, room.objects, idSet)) {
+        setStatus("Rotation impossible : chevauchement.");
+        return;
+      }
+
       pushUndoState();
-      obj.angleDeg = (obj.angleDeg - 5) % 360;
-      if (obj.angleDeg < 0) obj.angleDeg += 360;
+      for (let i = 0; i < selectedObjects.length; i++) {
+        selectedObjects[i].angleDeg = rotatedCandidates[i].angleDeg;
+      }
       draw();
+    }
+
+    rotateMinusBtn?.addEventListener('click', () => {
+      rotateSelectedObjects(-5);
     });
 
     rotatePlusBtn?.addEventListener('click', () => {
-      if (currentPageIndex === 0 || currentPageIndex === MANUAL_PAGE_INDEX) return;
-      if (interactionMode !== 'object') return;
-      const room = getCurrentRoom();
-      if (room.selectedObjectId == null) return;
-      const obj = room.objects.find(o => o.id === room.selectedObjectId);
-      if (!obj) return;
-      pushUndoState();
-      obj.angleDeg = (obj.angleDeg + 5) % 360;
-      draw();
+      rotateSelectedObjects(5);
     });
 
     rotate90Btn?.addEventListener('click', () => {
-      if (currentPageIndex === 0 || currentPageIndex === MANUAL_PAGE_INDEX) return;
-      if (interactionMode !== 'object') return;
-      const room = getCurrentRoom();
-      if (room.selectedObjectId == null) return;
-      const obj = room.objects.find(o => o.id === room.selectedObjectId);
-      if (!obj) return;
-      pushUndoState();
-      obj.angleDeg = (obj.angleDeg + 90) % 360;
-      draw();
+      rotateSelectedObjects(90);
     });
 
     deleteObjectBtn?.addEventListener('click', () => {
@@ -3171,6 +3327,16 @@ function formatDateTimeFR(isoDateTime) {
       const initScale = canvas.width / DEFAULT_WIDTH_M;
       scaleX = initScale;
       scaleY = initScale;
+
+      try {
+        const savedPreventOverlap = localStorage.getItem('preventOverlap');
+        preventOverlap = savedPreventOverlap === 'true';
+      } catch {
+        preventOverlap = false;
+      }
+      if (preventOverlapCheckbox) {
+        preventOverlapCheckbox.checked = preventOverlap;
+      }
 
       loadTemplatesFromStorage();
       buildTOC();
