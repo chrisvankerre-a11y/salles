@@ -1015,6 +1015,10 @@ let lastMouseYM         = 0;
       return candidateObjects.every(obj => isObjectInsideRoom(obj, room));
     }
 
+    function hasObjectsOutsideRoom(candidateObjects, room) {
+      return !areObjectsInsideRoom(candidateObjects, room);
+    }
+
     function showHomeUI() {
       homePanel.style.display   = 'block';
       if (manualPanel) manualPanel.style.display = 'none';
@@ -1888,11 +1892,7 @@ room.selectedObjectIds = prev.selectedObjectIds || [];
         angleDeg: 0
       };
 
-      if (!isObjectInsideRoom(obj, room)) {
-        room.undoStack.pop();
-        setStatus("Placement impossible : l'objet ne peut pas sortir de l'image.");
-        return;
-      }
+      const objectOutsideRoom = !isObjectInsideRoom(obj, room);
 
       if (preventOverlap && wouldOverlapAny([obj], room.objects)) {
         room.undoStack.pop();
@@ -1902,6 +1902,9 @@ room.selectedObjectIds = prev.selectedObjectIds || [];
 
       room.objects.push(obj);
       selectObject(obj);
+      if (objectOutsideRoom) {
+        setStatus("Attention, un objet sort de l'image.");
+      }
     }
 
     function placeTemplateAt(tpl, clickXM, clickYM) {
@@ -1946,10 +1949,7 @@ room.selectedObjectIds = prev.selectedObjectIds || [];
         });
       }
 
-      if (!areObjectsInsideRoom(candidateObjects, room)) {
-        setStatus("Placement impossible : un objet sortirait de l'image.");
-        return;
-      }
+      const objectsOutsideRoom = hasObjectsOutsideRoom(candidateObjects, room);
 
       if (preventOverlap && wouldOverlapAny(candidateObjects, room.objects)) {
         setStatus("Placement impossible : chevauchement.");
@@ -2051,15 +2051,7 @@ draw();
         };
       });
 
-      if (!areObjectsInsideRoom(rotatedCandidates, room)) {
-        setStatus("Rotation impossible : un objet sortirait de l'image.");
-        return;
-      }
-
-      if (!areObjectsInsideRoom(rotatedCandidates, room)) {
-        setStatus("Rotation impossible : un objet sortirait de l'image.");
-        return;
-      }
+      const objectsOutsideRoom = hasObjectsOutsideRoom(rotatedCandidates, room);
 
       if (preventOverlap && wouldOverlapAny(rotatedCandidates, room.objects, idSet)) {
         setStatus("Rotation impossible : chevauchement.");
@@ -2096,7 +2088,11 @@ draw();
       }
 
       draw();
-      setStatus("Disposition tournée de " + deltaDeg + "° (nouvel angle par défaut : " + Math.round(newAngle) + "°).");
+      if (objectsOutsideRoom) {
+        setStatus("Attention, un objet sort de l'image.");
+      } else {
+        setStatus("Disposition tournée de " + deltaDeg + "° (nouvel angle par défaut : " + Math.round(newAngle) + "°).");
+      }
     }
 
     // =========================
@@ -2277,9 +2273,8 @@ if (obj) {
               .filter(o => idSet.has(o.id))
               .map(o => ({ ...o, xM: o.xM + dx, yM: o.yM + dy }));
 
-            if (!areObjectsInsideRoom(candidates, room)) {
-              setStatus("Déplacement impossible : un objet sortirait de l'image.");
-            } else if (!preventOverlap || !wouldOverlapAny(candidates, room.objects, idSet)) {
+            const objectsOutsideRoom = hasObjectsOutsideRoom(candidates, room);
+            if (!preventOverlap || !wouldOverlapAny(candidates, room.objects, idSet)) {
               for (const o of room.objects) {
                 if (!idSet.has(o.id)) continue;
                 o.xM += dx;
@@ -2287,6 +2282,11 @@ if (obj) {
               }
               groupLastMouseXM = posM.xM;
               groupLastMouseYM = posM.yM;
+              if (objectsOutsideRoom) {
+                setStatus("Attention, un objet sort de l'image.");
+              } else {
+                setStatus('');
+              }
               draw();
             }
           }
@@ -2309,9 +2309,8 @@ if (interactionMode === 'object') {
         .filter(o => idSet.has(o.id))
         .map(o => ({ ...o, xM: o.xM + dx, yM: o.yM + dy }));
 
-      if (!areObjectsInsideRoom(candidates, room)) {
-        setStatus("Déplacement impossible : un objet sortirait de l'image.");
-      } else if (!preventOverlap || !wouldOverlapAny(candidates, room.objects, idSet)) {
+      const objectsOutsideRoom = hasObjectsOutsideRoom(candidates, room);
+      if (!preventOverlap || !wouldOverlapAny(candidates, room.objects, idSet)) {
         for (const o of room.objects) {
           if (!idSet.has(o.id)) continue;
           o.xM += dx;
@@ -2322,6 +2321,12 @@ if (interactionMode === 'object') {
 
         // calcul / mise à jour des guides d'alignement
         updateAlignmentGuides(room, selIds);
+
+        if (objectsOutsideRoom) {
+          setStatus("Attention, un objet sort de l'image.");
+        } else {
+          setStatus('');
+        }
 
         draw();
       }
@@ -3489,7 +3494,8 @@ function formatDateTimeFR(isoDateTime) {
       updateEditorPanelModeUI();
       switchPage(0);
     })();
-  </script>
+  
+</script>
 
 </body>
 </html>
