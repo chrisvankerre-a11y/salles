@@ -189,7 +189,6 @@
         <button id="exportTemplatesBtn">Exporter les dispositions</button>
         <button id="importTemplatesBtn">Importer des dispositions</button>
         <input type="file" id="importTemplatesInput" accept="application/json" style="display:none;">
-        <input type="file" id="importRoomInput" accept="application/json" style="display:none;">
       </fieldset>
     </div>
 
@@ -500,8 +499,6 @@ Vérifiez donc cette valeur avant de commencer l’aménagement.
             <input type="text" id="templateName" placeholder="Ex : U conférence">
           </label>
           <button id="saveTemplate">Enregistrer la disposition actuelle</button>
-          <button id="saveRoomLayout">Sauvegarder la salle</button>
-          <button id="importRoomBtn">Importer une salle</button>
           <label>Choisir une disposition enregistrée :
             <select id="templateSelect"></select>
           </label>
@@ -668,8 +665,6 @@ Vérifiez donc cette valeur avant de commencer l’aménagement.
     const exportTemplatesBtn    = document.getElementById('exportTemplatesBtn');
     const importTemplatesBtn    = document.getElementById('importTemplatesBtn');
     const importTemplatesInput  = document.getElementById('importTemplatesInput');
-    const importRoomBtn         = document.getElementById('importRoomBtn');
-    const importRoomInput       = document.getElementById('importRoomInput');
 
     const noSelectionMsg        = document.getElementById('noSelectionMsg');
     const selectionControls     = document.getElementById('selectionControls');
@@ -678,7 +673,6 @@ Vérifiez donc cette valeur avant de commencer l’aménagement.
     const templateNameInput     = document.getElementById('templateName');
     const templateSelect        = document.getElementById('templateSelect');
     const templateSaveBtn       = document.getElementById('saveTemplate');
-    const saveRoomLayoutBtn      = document.getElementById('saveRoomLayout');
     const rotateLastGroupMinusBtn = document.getElementById('rotateLastGroupMinus');
     const rotateLastGroupPlusBtn  = document.getElementById('rotateLastGroupPlus');
     const rotateLastGroup45Btn    = document.getElementById('rotateLastGroup45');
@@ -2702,95 +2696,6 @@ room.selectedObjectIds = [];
       reader.readAsText(file, 'utf-8');
     });
 
-
-    importRoomBtn?.addEventListener('click', () => {
-      if (!importRoomInput) return;
-      importRoomInput.value = '';
-      importRoomInput.click();
-    });
-
-    function normalizeImportedRoomObject(o, room, nextId) {
-      if (!o || typeof o.type !== 'string') return null;
-      const size = getObjectSize(o.type);
-      let angleDeg = typeof o.angleDeg === 'number' ? o.angleDeg : 0;
-      angleDeg = ((angleDeg % 360) + 360) % 360;
-      return {
-        id: nextId,
-        type: o.type,
-        xM: typeof o.xM === 'number' ? o.xM : 0,
-        yM: typeof o.yM === 'number' ? o.yM : 0,
-        wM: typeof o.wM === 'number' ? o.wM : size.wM,
-        hM: typeof o.hM === 'number' ? o.hM : size.hM,
-        angleDeg
-      };
-    }
-
-    importRoomInput?.addEventListener('change', (e) => {
-      const file = e.target.files && e.target.files[0];
-      if (!file) {
-        setStatus("Aucun fichier sélectionné.");
-        return;
-      }
-      if (currentPageIndex === 0 || currentPageIndex === MANUAL_PAGE_INDEX) {
-        setStatus("Ouvrir d'abord une page de salle pour importer ce fichier.");
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        try {
-          const raw = evt.target.result;
-          const imported = JSON.parse(raw);
-
-          if (!imported || typeof imported !== 'object' || Array.isArray(imported)) {
-            setStatus("Fichier invalide : format de salle attendu.");
-            return;
-          }
-
-          if (!Array.isArray(imported.objects)) {
-            setStatus("Fichier invalide : la clé objects est absente ou invalide.");
-            return;
-          }
-
-          const room = getCurrentRoom();
-          const cleanedObjects = [];
-          let nextId = 1;
-          for (const obj of imported.objects) {
-            const normalized = normalizeImportedRoomObject(obj, room, nextId);
-            if (!normalized) continue;
-            cleanedObjects.push(normalized);
-            nextId++;
-          }
-
-          pushUndoState();
-          room.objects = cleanedObjects;
-          room.nextObjectId = nextId;
-          room.selectedObjectId = null;
-          room.selectedObjectIds = [];
-          room.dragGroup = null;
-
-          for (const gid in dispositionGroups) {
-            if (dispositionGroups[gid].roomIndex === currentRoomIndex) {
-              delete dispositionGroups[gid];
-            }
-          }
-          activeGroupId = null;
-          lastPlacedGroupInfo = null;
-
-          refreshSelectionUI();
-          draw();
-
-          const importedName = (typeof imported.roomName === 'string' && imported.roomName.trim())
-            ? imported.roomName.trim()
-            : ((typeof imported.title === 'string' && imported.title.trim()) ? imported.title.trim() : file.name);
-          setStatus('Salle importée dans ' + room.name + ' : ' + cleanedObjects.length + ' objet(s) chargés depuis « ' + importedName + ' ».');
-        } catch (err) {
-          setStatus("Erreur lors de la lecture du fichier de salle.");
-        }
-      };
-      reader.readAsText(file, 'utf-8');
-    });
-
 // Formatage des dates en JJ/MM/AAAA
 function formatDateFR(isoDate) {
   if (!isoDate) return '';
@@ -3061,22 +2966,6 @@ function formatDateTimeFR(isoDateTime) {
       catch {}
     }
 
-
-    function formatSaveDate(date = new Date()) {
-      const yyyy = date.getFullYear();
-      const mm = String(date.getMonth() + 1).padStart(2, '0');
-      const dd = String(date.getDate()).padStart(2, '0');
-      return yyyy + '-' + mm + '-' + dd;
-    }
-
-    function sanitizeFileName(name) {
-      return String(name || 'salle')
-        .normalize('NFD').replace(/[̀-ͯ]/g, '')
-        .replace(/[^a-zA-Z0-9-_ ]+/g, '')
-        .trim()
-        .replace(/\s+/g, '_') || 'salle';
-    }
-
     templateSaveBtn?.addEventListener('click', () => {
       if (currentPageIndex === 0 || currentPageIndex === MANUAL_PAGE_INDEX) return;
       const room = getCurrentRoom();
@@ -3094,40 +2983,6 @@ function formatDateTimeFR(isoDateTime) {
       saveTemplatesToStorage();
       refreshTemplateSelect();
       setStatus('Disposition "' + name + '" enregistrée.');
-    });
-
-
-    saveRoomLayoutBtn?.addEventListener('click', () => {
-      if (currentPageIndex === 0 || currentPageIndex === MANUAL_PAGE_INDEX) {
-        setStatus("Choisir une salle à sauvegarder.");
-        return;
-      }
-
-      const room = getCurrentRoom();
-      const savedAt = new Date();
-      const savedDate = formatSaveDate(savedAt);
-      const title = room.name + ' - ' + savedDate;
-      const payload = {
-        title,
-        roomName: room.name,
-        savedAt: savedAt.toISOString(),
-        objects: room.objects.map(o => ({ ...o }))
-      };
-
-      try {
-        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = sanitizeFileName(room.name) + '_' + savedDate + '.json';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        setStatus('Salle sauvegardée : fichier téléchargé (' + title + ').');
-      } catch (e) {
-        setStatus("Erreur lors de la sauvegarde de la salle.");
-      }
     });
 
     document.getElementById('deleteTemplate')?.addEventListener('click', () => {
