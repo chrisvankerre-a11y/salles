@@ -1828,7 +1828,7 @@ function deleteSelectedObject() {
       lastPlacedGroupInfo = null;
 
       draw();
-      setStatus("Disposition supprimée (Ctrl+Z pour annuler).");
+      setStatus("");
     }
 
     
@@ -1865,7 +1865,11 @@ function cloneState(room) {
 room.selectedObjectIds = prev.selectedObjectIds || [];
       refreshSelectionUI();
       draw();
-      setStatus("Action annulée.");
+      if (hasObjectsOutsideRoom(room.objects, room)) {
+        setStatus("Attention, un objet sort de l'image.");
+      } else {
+        setStatus("");
+      }
     }
 
     // =========================
@@ -1997,7 +2001,13 @@ room2.selectedObjectId = null;
 room2.selectedObjectIds = [];
 refreshSelectionUI();
 draw();
-      setStatus('Disposition placée (orientation ' + templatePlacementAngleDeg + '°, Ctrl+Z pour annuler le placement).');
+      const idSet = new Set(placedIds);
+      const placedObjects = room.objects.filter(o => idSet.has(o.id));
+      if (hasObjectsOutsideRoom(placedObjects, room)) {
+        setStatus("Attention, un objet sort de l'image.");
+      } else {
+        setStatus("");
+      }
     }
 
     function rotateLastGroup(deltaDeg) {
@@ -2091,7 +2101,7 @@ draw();
       if (objectsOutsideRoom) {
         setStatus("Attention, un objet sort de l'image.");
       } else {
-        setStatus("Disposition tournée de " + deltaDeg + "° (nouvel angle par défaut : " + Math.round(newAngle) + "°).");
+        setStatus("");
       }
     }
 
@@ -2208,7 +2218,7 @@ draw();
             groupLastMouseYM = posM.yM;
             activeGroupId     = clicked.groupId;
             movingGroupActive = true;
-            setStatus("Déplacement de la disposition (mode dispo).");
+            setStatus("");
             return;
           }
         }
@@ -2352,9 +2362,28 @@ if (interactionMode === 'object') {
       const yPx        = (e.clientY - rect.top)  * scaleRectY;
 
       if (movingGroupActive) {
+        const finalGroupId = activeGroupId;
         movingGroupActive   = false;
         activeGroupId       = null;
-        setStatus("Disposition déplacée.");
+
+        if (finalGroupId != null) {
+          const room = getCurrentRoom();
+          const group = dispositionGroups[finalGroupId];
+          if (room && group && group.ids && group.roomIndex === currentRoomIndex) {
+            const idSet = new Set(group.ids);
+            const currentObjects = room.objects.filter(o => idSet.has(o.id));
+            if (hasObjectsOutsideRoom(currentObjects, room)) {
+              setStatus("Attention, un objet sort de l'image.");
+            } else {
+              setStatus("");
+            }
+          } else {
+            setStatus("");
+          }
+        } else {
+          setStatus("");
+        }
+
         mouseDown        = false;
         isDragging       = false;
         mouseDownOnObject= null;
@@ -2408,9 +2437,7 @@ if (interactionMode === 'object') {
       try {
         localStorage.setItem('preventOverlap', preventOverlap ? 'true' : 'false');
       } catch {}
-      setStatus(preventOverlap
-        ? "Chevauchement des objets interdit."
-        : "Chevauchement des objets autorisé.");
+      setStatus("");
     });
 
     panelLayoutBtn?.addEventListener('click', () => {
@@ -2437,7 +2464,7 @@ if (interactionMode === 'object') {
       movingGroupActive        = false;
       activeGroupId            = null;
       updateModeUI();
-      setStatus("Mode objet : déplacement / rotation individuels.");
+      setStatus("");
     });
 
     modeDispoBtn?.addEventListener('click', () => {
@@ -2449,7 +2476,7 @@ if (interactionMode === 'object') {
       movingGroupActive = false;
       activeGroupId     = null;
       updateModeUI();
-      setStatus("Mode dispo : déplacement / rotation des dispositions. Sélectionner un modèle pour entrer en mode placement.");
+      setStatus("");
     });
 
     applyRoomSizeBtn?.addEventListener('click', () => {
@@ -2459,7 +2486,7 @@ if (interactionMode === 'object') {
         return;
       }
       updateScale();
-      setStatus("Largeur réelle mise à jour (hauteur déduite automatiquement).");
+      setStatus("");
     });
 
     clearRoomObjectsBtn?.addEventListener('click', () => {
@@ -2485,7 +2512,7 @@ room.selectedObjectIds = [];
 
       refreshSelectionUI();
       draw();
-      setStatus("Tous les objets ont été supprimés (Ctrl+Z pour annuler).");
+      setStatus("");
     });
 
     roomImageInput?.addEventListener('change', (e) => {
@@ -2513,7 +2540,7 @@ room.selectedObjectIds = [];
             updateScale();
             draw();
           }
-          setStatus("Image enregistrée pour " + room.name + " (mémorisée sur cet ordinateur).");
+          setStatus("");
         };
         img.src = dataURL;
       };
@@ -2583,7 +2610,7 @@ room.selectedObjectIds = [];
       link.click();
       document.body.removeChild(link);
 
-      setStatus("Image exportée (fichier PNG téléchargé).");
+      setStatus("");
     });
 
     exportLegendBtn?.addEventListener('click', () => {
@@ -2699,7 +2726,7 @@ room.selectedObjectIds = [];
 
           saveTemplatesToStorage();
           refreshTemplateSelect();
-          setStatus(countAdded + " disposition(s) importée(s) sans écraser les modèles existants.");
+          setStatus("");
         } catch (err) {
           setStatus("Erreur lors de la lecture du fichier de dispositions.");
         }
@@ -2788,7 +2815,7 @@ room.selectedObjectIds = [];
           const importedName = (typeof imported.roomName === 'string' && imported.roomName.trim())
             ? imported.roomName.trim()
             : ((typeof imported.title === 'string' && imported.title.trim()) ? imported.title.trim() : file.name);
-          setStatus('Salle importée dans ' + room.name + ' : ' + cleanedObjects.length + ' objet(s) chargés depuis « ' + importedName + ' ».');
+          setStatus("");
         } catch (err) {
           setStatus("Erreur lors de la lecture du fichier de salle.");
         }
@@ -3033,7 +3060,7 @@ function formatDateTimeFR(isoDateTime) {
       link.click();
       document.body.removeChild(link);
 
-      setStatus("A4 salle + paramètres exporté (PNG téléchargé).");
+      setStatus("");
     });
 
     function refreshTemplateSelect() {
@@ -3098,7 +3125,7 @@ function formatDateTimeFR(isoDateTime) {
       }
       saveTemplatesToStorage();
       refreshTemplateSelect();
-      setStatus('Disposition "' + name + '" enregistrée.');
+      setStatus("");
     });
 
 
@@ -3129,7 +3156,7 @@ function formatDateTimeFR(isoDateTime) {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-        setStatus('Salle sauvegardée : fichier téléchargé (' + title + ').');
+        setStatus("");
       } catch (e) {
         setStatus("Erreur lors de la sauvegarde de la salle.");
       }
@@ -3150,7 +3177,7 @@ function formatDateTimeFR(isoDateTime) {
       }
       saveTemplatesToStorage();
       refreshTemplateSelect();
-      setStatus('Modèle "' + name + '" supprimé.');
+      setStatus("");
     });
 
     templateSelect?.addEventListener('change', () => {
@@ -3160,7 +3187,7 @@ function formatDateTimeFR(isoDateTime) {
         placingTemplate          = false;
         currentPlacementTemplate = null;
         templatePlacementAngleDeg= 0;
-        setStatus("Mode placement de disposition quitté.");
+        setStatus("");
         return;
       }
 
@@ -3177,11 +3204,7 @@ function formatDateTimeFR(isoDateTime) {
       currentPlacementTemplate = tpl;
       templatePlacementAngleDeg= (typeof tpl.lastAngleDeg === 'number') ? tpl.lastAngleDeg : 0;
 
-      setStatus(
-        'Mode placement pour "' + name +
-        '". Angle utilisé par défaut : ' + templatePlacementAngleDeg +
-        '°. Cliquer dans la salle (mode dispo) pour placer cette disposition autant de fois que souhaité.'
-      );
+      setStatus("");
     });
 
     rotateLastGroupMinusBtn?.addEventListener('click', () => {
@@ -3199,7 +3222,7 @@ function formatDateTimeFR(isoDateTime) {
         placingTemplate          = false;
         currentPlacementTemplate = null;
         templatePlacementAngleDeg= 0;
-        setStatus("Mode placement de disposition quitté (changement de type d'objet).");
+        setStatus("");
       }
     });
 
@@ -3247,7 +3270,7 @@ function formatDateTimeFR(isoDateTime) {
       params.others.push({ label, value: 'always' });
       newParamLabelInput.value = '';
       refreshParamsUI();
-      setStatus('Paramètre "' + label + '" ajouté.');
+      setStatus("");
     });
 
     extraParamsListDiv?.addEventListener('change', (e) => {
@@ -3274,7 +3297,7 @@ function formatDateTimeFR(isoDateTime) {
       const label = params.others[idx].label;
       params.others.splice(idx, 1);
       refreshParamsUI();
-      setStatus('Paramètre "' + label + '" supprimé.');
+      setStatus("");
     });
 
     function bindEventField(input, key) {
