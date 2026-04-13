@@ -469,7 +469,8 @@ Vérifiez donc cette valeur avant de commencer l’aménagement.
               <option value="tablePoker">Table poker 2.5m x 1.25m</option>
               <option value="tableRonde">Table ronde Ø1.5m</option>
               <option value="tableTraiteur">Table traiteur 2.2m x 0.8m</option>
-              <option value="tringles">Tringles 1.11m x 0.5m</option>
+             <option value="tente">Tente 65m x 12m</option>
+   <option value="tringles">Tringles 1.11m x 0.5m</option>
               <option value="upLighter">Up-lighter Ø0.2m</option>
             </select>
           </label>
@@ -739,7 +740,7 @@ Vérifiez donc cette valeur avant de commencer l’aménagement.
       DEFAULT_WIDTH_M, // 14
       DEFAULT_WIDTH_M, // 15
       33,   // 16 Resto
-      75    // 17 Parking
+      120    // 17 Parking
     ];
 
     // Noms des pages
@@ -767,6 +768,7 @@ Vérifiez donc cette valeur avant de commencer l’aménagement.
     const objectLegend = [
 { type: 'blocPodium', label: 'Bloc de podium' },
      { type: 'chair',             label: 'Chaise' },
+     { type: 'tente',             label: 'Tente' },
       { type: 'deskHotesses',      label: 'Desk hôtesses' },
       { type: 'deskLumineux',      label: 'Desk lumineux' },
       { type: 'ecranMobile',       label: 'Ecran mobile' },
@@ -1098,6 +1100,7 @@ let lastMouseYM         = 0;
       switch (type) {
         case 'table':            return { wM: 1.6, hM: 0.8 };
         case 'chair':            return { wM: 0.45, hM: 0.45 };
+        case 'tente':            return { wM: 65, hM: 12 };
         case 'tablePoker':       return { wM: 2.5, hM: 1.25 };
         case 'flipchart':        return { wM: 0.6, hM: 0.6 };
         case 'deskHotesses':     return { wM: 0.9, hM: 0.5 };
