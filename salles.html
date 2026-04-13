@@ -177,8 +177,8 @@
         <legend>Mode d'emploi (page d’accueil)</legend>
         <p>
           Utilisez la table des matières ci-dessous pour accéder rapidement à une salle.
-          La page 0 affiche la légende des objets, les pages 1 à 15 correspondent aux salles,
-          et la dernière page (16) contient le mode d’emploi détaillé.
+          La page 0 affiche la légende des objets, les pages 1 à 17 correspondent aux salles,
+          et la dernière page (18) contient le mode d’emploi détaillé.
         </p>
       </fieldset>
 
@@ -209,8 +209,8 @@ Aucune connaissance technique n’est nécessaire.
 <h4>2. Organisation des pages</h4>
 <ul>
   <li><strong>Page 0</strong> : légende des objets, accès rapide aux salles, export/import des dispositions.</li>
-  <li><strong>Pages 1 à 15</strong> : plans des différentes salles.</li>
-  <li><strong>Page 16</strong> : ce mode d’emploi.</li>
+  <li><strong>Pages 1 à 17</strong> : plans des différentes salles.</li>
+  <li><strong>Page 18</strong> : ce mode d’emploi.</li>
 </ul>
 
 <p><strong>Navigation :</strong></p>
@@ -366,13 +366,13 @@ Il est <strong>très important</strong> de les exporter régulièrement depuis l
 <h4>10. Utiliser les pages 13, 14 et 15</h4>
 
 <p>
-Les pages <strong>13, 14 et 15</strong> permettent de charger
+Les pages <strong>13, 14, 15, 16 et 17</strong> permettent de charger
 le <strong>plan de la salle de votre choix</strong> (image).
 </p>
 
 <p><strong>Comment faire :</strong></p>
 <ul>
-  <li>Allez sur la page 13, 14 ou 15.</li>
+  <li>Allez sur la page 13, 14, 15, 16 ou 17.</li>
   <li>Dans la section <strong>Salle</strong>, cliquez sur <strong>Image de la salle</strong> et sélectionnez votre fichier.</li>
   <li>Renseignez ensuite la <strong>largeur réelle (en mètres)</strong>.</li>
   <li>Cliquez sur <strong>Appliquer la largeur</strong>.</li>
@@ -714,7 +714,7 @@ Vérifiez donc cette valeur avant de commencer l’aménagement.
     const eventReadyInput       = document.getElementById('eventReady');
     const eventRemarksTextarea  = document.getElementById('eventRemarks');
 
-    const ROOM_COUNT       = 15;
+    const ROOM_COUNT       = 17;
     const MANUAL_PAGE_INDEX = ROOM_COUNT + 1; // 16
     const TOTAL_PAGES      = ROOM_COUNT + 2;  // 0 = légende, 1..15 = salles, 16 = manuel
     const DEFAULT_WIDTH_M  = 12.75;
@@ -732,12 +732,14 @@ Vérifiez donc cette valeur avant de commencer l’aménagement.
       15,   // 7 Coffie Corner
       21,   // 8 Blue Ocean
       25,   // 9 Blue Ocean & Couloir
-      21.5,   // 10 Blue
-      10, // 11 Ocean
+      21.5, // 10 Blue
+      10,   // 11 Ocean
       35,   // 12 Casino Club
       DEFAULT_WIDTH_M, // 13
       DEFAULT_WIDTH_M, // 14
-      DEFAULT_WIDTH_M  // 15
+      DEFAULT_WIDTH_M, // 15
+      33,   // 16 Resto
+      75    // 17 Parking
     ];
 
     // Noms des pages
@@ -757,7 +759,9 @@ Vérifiez donc cette valeur avant de commencer l’aménagement.
       "Casino Club",
       null,
       null,
-      null
+      null,
+      "Resto",
+      "Parking"
     ];
 
     const objectLegend = [
@@ -1199,6 +1203,31 @@ case 'blocPodium':      return { wM: 2, hM: 1 };
       };
 
       img.src = num + '.png'; // cherche 01.png, 02.png, ... dans le même dossier que le HTML
+    }
+
+    function loadNamedRoomImage(roomIndex, fileName) {
+      if (roomIndex < 0 || roomIndex >= ROOM_COUNT) return;
+
+      const img = new Image();
+
+      img.onload = function() {
+        const room = rooms[roomIndex];
+        room.backgroundImage = img;
+        room.imageLoaded = true;
+
+        if (roomIndex === currentRoomIndex && currentPageIndex !== 0 && currentPageIndex !== MANUAL_PAGE_INDEX) {
+          canvas.width  = img.width;
+          canvas.height = img.height;
+          updateScale();
+          draw();
+        }
+      };
+
+      img.onerror = function() {
+        console.warn('Image par défaut introuvable pour la salle', roomIndex + 1, fileName);
+      };
+
+      img.src = fileName;
     }
 
     function applyZoomToCanvas() {
@@ -1828,7 +1857,7 @@ function deleteSelectedObject() {
       lastPlacedGroupInfo = null;
 
       draw();
-      setStatus("Disposition supprimée (Ctrl+Z pour annuler).");
+      setStatus("");
     }
 
     
@@ -1865,7 +1894,11 @@ function cloneState(room) {
 room.selectedObjectIds = prev.selectedObjectIds || [];
       refreshSelectionUI();
       draw();
-      setStatus("Action annulée.");
+      if (hasObjectsOutsideRoom(room.objects, room)) {
+        setStatus("Attention, un objet sort de l'image.");
+      } else {
+        setStatus("");
+      }
     }
 
     // =========================
@@ -1997,7 +2030,13 @@ room2.selectedObjectId = null;
 room2.selectedObjectIds = [];
 refreshSelectionUI();
 draw();
-      setStatus('Disposition placée (orientation ' + templatePlacementAngleDeg + '°, Ctrl+Z pour annuler le placement).');
+      const idSet = new Set(placedIds);
+      const placedObjects = room.objects.filter(o => idSet.has(o.id));
+      if (hasObjectsOutsideRoom(placedObjects, room)) {
+        setStatus("Attention, un objet sort de l'image.");
+      } else {
+        setStatus("");
+      }
     }
 
     function rotateLastGroup(deltaDeg) {
@@ -2091,7 +2130,7 @@ draw();
       if (objectsOutsideRoom) {
         setStatus("Attention, un objet sort de l'image.");
       } else {
-        setStatus("Disposition tournée de " + deltaDeg + "° (nouvel angle par défaut : " + Math.round(newAngle) + "°).");
+        setStatus("");
       }
     }
 
@@ -2208,7 +2247,7 @@ draw();
             groupLastMouseYM = posM.yM;
             activeGroupId     = clicked.groupId;
             movingGroupActive = true;
-            setStatus("Déplacement de la disposition (mode dispo).");
+            setStatus("");
             return;
           }
         }
@@ -2352,9 +2391,28 @@ if (interactionMode === 'object') {
       const yPx        = (e.clientY - rect.top)  * scaleRectY;
 
       if (movingGroupActive) {
+        const finalGroupId = activeGroupId;
         movingGroupActive   = false;
         activeGroupId       = null;
-        setStatus("Disposition déplacée.");
+
+        if (finalGroupId != null) {
+          const room = getCurrentRoom();
+          const group = dispositionGroups[finalGroupId];
+          if (room && group && group.ids && group.roomIndex === currentRoomIndex) {
+            const idSet = new Set(group.ids);
+            const currentObjects = room.objects.filter(o => idSet.has(o.id));
+            if (hasObjectsOutsideRoom(currentObjects, room)) {
+              setStatus("Attention, un objet sort de l'image.");
+            } else {
+              setStatus("");
+            }
+          } else {
+            setStatus("");
+          }
+        } else {
+          setStatus("");
+        }
+
         mouseDown        = false;
         isDragging       = false;
         mouseDownOnObject= null;
@@ -2408,9 +2466,7 @@ if (interactionMode === 'object') {
       try {
         localStorage.setItem('preventOverlap', preventOverlap ? 'true' : 'false');
       } catch {}
-      setStatus(preventOverlap
-        ? "Chevauchement des objets interdit."
-        : "Chevauchement des objets autorisé.");
+      setStatus("");
     });
 
     panelLayoutBtn?.addEventListener('click', () => {
@@ -2437,7 +2493,7 @@ if (interactionMode === 'object') {
       movingGroupActive        = false;
       activeGroupId            = null;
       updateModeUI();
-      setStatus("Mode objet : déplacement / rotation individuels.");
+      setStatus("");
     });
 
     modeDispoBtn?.addEventListener('click', () => {
@@ -2449,17 +2505,17 @@ if (interactionMode === 'object') {
       movingGroupActive = false;
       activeGroupId     = null;
       updateModeUI();
-      setStatus("Mode dispo : déplacement / rotation des dispositions. Sélectionner un modèle pour entrer en mode placement.");
+      setStatus("");
     });
 
     applyRoomSizeBtn?.addEventListener('click', () => {
       if (currentPageIndex === 0 || currentPageIndex === MANUAL_PAGE_INDEX) return;
-      if (currentRoomIndex < 12) {
+      if (currentRoomIndex < 15) {
         setStatus("Largeur fixe pour cette salle.");
         return;
       }
       updateScale();
-      setStatus("Largeur réelle mise à jour (hauteur déduite automatiquement).");
+      setStatus("");
     });
 
     clearRoomObjectsBtn?.addEventListener('click', () => {
@@ -2485,7 +2541,7 @@ room.selectedObjectIds = [];
 
       refreshSelectionUI();
       draw();
-      setStatus("Tous les objets ont été supprimés (Ctrl+Z pour annuler).");
+      setStatus("");
     });
 
     roomImageInput?.addEventListener('change', (e) => {
@@ -2513,7 +2569,7 @@ room.selectedObjectIds = [];
             updateScale();
             draw();
           }
-          setStatus("Image enregistrée pour " + room.name + " (mémorisée sur cet ordinateur).");
+          setStatus("");
         };
         img.src = dataURL;
       };
@@ -2583,7 +2639,7 @@ room.selectedObjectIds = [];
       link.click();
       document.body.removeChild(link);
 
-      setStatus("Image exportée (fichier PNG téléchargé).");
+      setStatus("");
     });
 
     exportLegendBtn?.addEventListener('click', () => {
@@ -2699,7 +2755,7 @@ room.selectedObjectIds = [];
 
           saveTemplatesToStorage();
           refreshTemplateSelect();
-          setStatus(countAdded + " disposition(s) importée(s) sans écraser les modèles existants.");
+          setStatus("");
         } catch (err) {
           setStatus("Erreur lors de la lecture du fichier de dispositions.");
         }
@@ -2788,7 +2844,7 @@ room.selectedObjectIds = [];
           const importedName = (typeof imported.roomName === 'string' && imported.roomName.trim())
             ? imported.roomName.trim()
             : ((typeof imported.title === 'string' && imported.title.trim()) ? imported.title.trim() : file.name);
-          setStatus('Salle importée dans ' + room.name + ' : ' + cleanedObjects.length + ' objet(s) chargés depuis « ' + importedName + ' ».');
+          setStatus("");
         } catch (err) {
           setStatus("Erreur lors de la lecture du fichier de salle.");
         }
@@ -3033,7 +3089,7 @@ function formatDateTimeFR(isoDateTime) {
       link.click();
       document.body.removeChild(link);
 
-      setStatus("A4 salle + paramètres exporté (PNG téléchargé).");
+      setStatus("");
     });
 
     function refreshTemplateSelect() {
@@ -3098,7 +3154,7 @@ function formatDateTimeFR(isoDateTime) {
       }
       saveTemplatesToStorage();
       refreshTemplateSelect();
-      setStatus('Disposition "' + name + '" enregistrée.');
+      setStatus("");
     });
 
 
@@ -3129,7 +3185,7 @@ function formatDateTimeFR(isoDateTime) {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-        setStatus('Salle sauvegardée : fichier téléchargé (' + title + ').');
+        setStatus("");
       } catch (e) {
         setStatus("Erreur lors de la sauvegarde de la salle.");
       }
@@ -3150,7 +3206,7 @@ function formatDateTimeFR(isoDateTime) {
       }
       saveTemplatesToStorage();
       refreshTemplateSelect();
-      setStatus('Modèle "' + name + '" supprimé.');
+      setStatus("");
     });
 
     templateSelect?.addEventListener('change', () => {
@@ -3160,7 +3216,7 @@ function formatDateTimeFR(isoDateTime) {
         placingTemplate          = false;
         currentPlacementTemplate = null;
         templatePlacementAngleDeg= 0;
-        setStatus("Mode placement de disposition quitté.");
+        setStatus("");
         return;
       }
 
@@ -3177,11 +3233,7 @@ function formatDateTimeFR(isoDateTime) {
       currentPlacementTemplate = tpl;
       templatePlacementAngleDeg= (typeof tpl.lastAngleDeg === 'number') ? tpl.lastAngleDeg : 0;
 
-      setStatus(
-        'Mode placement pour "' + name +
-        '". Angle utilisé par défaut : ' + templatePlacementAngleDeg +
-        '°. Cliquer dans la salle (mode dispo) pour placer cette disposition autant de fois que souhaité.'
-      );
+      setStatus("");
     });
 
     rotateLastGroupMinusBtn?.addEventListener('click', () => {
@@ -3199,7 +3251,7 @@ function formatDateTimeFR(isoDateTime) {
         placingTemplate          = false;
         currentPlacementTemplate = null;
         templatePlacementAngleDeg= 0;
-        setStatus("Mode placement de disposition quitté (changement de type d'objet).");
+        setStatus("");
       }
     });
 
@@ -3247,7 +3299,7 @@ function formatDateTimeFR(isoDateTime) {
       params.others.push({ label, value: 'always' });
       newParamLabelInput.value = '';
       refreshParamsUI();
-      setStatus('Paramètre "' + label + '" ajouté.');
+      setStatus("");
     });
 
     extraParamsListDiv?.addEventListener('change', (e) => {
@@ -3274,7 +3326,7 @@ function formatDateTimeFR(isoDateTime) {
       const label = params.others[idx].label;
       params.others.splice(idx, 1);
       refreshParamsUI();
-      setStatus('Paramètre "' + label + '" supprimé.');
+      setStatus("");
     });
 
     function bindEventField(input, key) {
@@ -3312,7 +3364,7 @@ function formatDateTimeFR(isoDateTime) {
       const room       = getCurrentRoom();
 
       if (roomWidthControls) {
-        roomWidthControls.style.display = currentRoomIndex < 12 ? 'none' : 'block';
+        roomWidthControls.style.display = currentRoomIndex < 15 ? 'none' : 'block';
       }
 
       roomWidthMetersInput.value = room.roomWidthMeters;
@@ -3325,6 +3377,14 @@ function formatDateTimeFR(isoDateTime) {
       // 2) Si toujours rien et salle 1..12, charger 01.png ... 12.png
       if (!room.imageLoaded && roomIndex < 12) {
         loadDefaultRoomImage(roomIndex);
+      }
+
+      // 3) Charger aussi les images par défaut ajoutées pour les salles 16 et 17
+      if (!room.imageLoaded && roomIndex === 15) {
+        loadNamedRoomImage(roomIndex, "resto.png");
+      }
+      if (!room.imageLoaded && roomIndex === 16) {
+        loadNamedRoomImage(roomIndex, "parking.png");
       }
 
       if (room.backgroundImage && room.imageLoaded) {
