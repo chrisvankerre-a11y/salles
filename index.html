@@ -1134,7 +1134,7 @@ case 'blocPodium':      return { wM: 2, hM: 1 };
       const room = getCurrentRoom();
       let roomWidth = room.roomWidthMeters;
 
-      if (currentRoomIndex >= 12) {
+      if (currentRoomIndex >= 12 && currentRoomIndex <= 14) {
         const newWidth = parseFloat(roomWidthMetersInput.value);
         if (!newWidth || newWidth <= 0) {
           setStatus("Largeur réelle invalide.");
@@ -2510,7 +2510,7 @@ if (interactionMode === 'object') {
 
     applyRoomSizeBtn?.addEventListener('click', () => {
       if (currentPageIndex === 0 || currentPageIndex === MANUAL_PAGE_INDEX) return;
-      if (currentRoomIndex < 15) {
+      if (currentRoomIndex < 12 || currentRoomIndex > 14) {
         setStatus("Largeur fixe pour cette salle.");
         return;
       }
@@ -3364,7 +3364,7 @@ function formatDateTimeFR(isoDateTime) {
       const room       = getCurrentRoom();
 
       if (roomWidthControls) {
-        roomWidthControls.style.display = currentRoomIndex < 15 ? 'none' : 'block';
+        roomWidthControls.style.display = (currentRoomIndex >= 12 && currentRoomIndex <= 14) ? 'block' : 'none';
       }
 
       roomWidthMetersInput.value = room.roomWidthMeters;
@@ -3551,11 +3551,4 @@ function formatDateTimeFR(isoDateTime) {
       loadTemplatesFromStorage();
       buildTOC();
       updateModeUI();
-      updateEditorPanelModeUI();
-      switchPage(0);
-    })();
-  
-</script>
-
-</body>
-</html>
+      updateE
