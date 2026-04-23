@@ -1638,7 +1638,23 @@ if (interactionMode === 'object') {
   context.fillStyle = '#c2185b';
   context.font = isDrawingLegend ? '40px sans-serif' : '12px sans-serif';
   context.fillText('Bloc Podium', 0, 0);
- }
+} else if (obj.type === 'tente') {
+  context.fillStyle   = 'rgba(144, 202, 249, 0.25)';
+  context.strokeStyle = '#1565c0';
+  context.lineWidth   = isDrawingLegend ? 6 : 2;
+  context.fillRect(-wPx / 2, -hPx / 2, wPx, hPx);
+  context.strokeRect(-wPx / 2, -hPx / 2, wPx, hPx);
+  context.beginPath();
+  context.strokeStyle = 'rgba(21, 101, 192, 0.35)';
+  context.moveTo(-wPx / 2, -hPx / 2);
+  context.lineTo(wPx / 2, hPx / 2);
+  context.moveTo(wPx / 2, -hPx / 2);
+  context.lineTo(-wPx / 2, hPx / 2);
+  context.stroke();
+  context.fillStyle = '#1565c0';
+  context.font = isDrawingLegend ? '50px sans-serif' : '16px sans-serif';
+  context.fillText('TENTE 65\u00d712m', 0, 0);
+}
 
       context.restore();
     }
