@@ -446,7 +446,10 @@ Vérifiez donc cette valeur avant de commencer l’aménagement.
           <label>Type d'objet :
             <select id="objectType">
  <option value="blocPodium">Bloc de podium 2m x 1m</option>
-             <option value="chair">Chaise 0.45m x 0.45m</option>
+<option value="obj12x6">Objet 12 x 6</option>
+<option value="obj5x5">Objet 5 x 5</option>
+<option value="obj3x6">Objet 3 x 6</option>
+              <option value="chair">Chaise 0.45m x 0.45m</option>
               <option value="deskHotesses">Desk hôtesses 0.9m x 0.5m</option>
               <option value="deskLumineux">Desk lumineux 1.2m x 0.6m</option>
               <option value="ecranMobile">Ecran mobile 1.47m x 0.8m</option>
@@ -766,7 +769,10 @@ Vérifiez donc cette valeur avant de commencer l’aménagement.
     ];
 
     const objectLegend = [
-{ type: 'blocPodium', label: 'Bloc de podium' },
+{ type: 'obj12x6', label: 'Objet 12x6' },
+{ type: 'obj5x5',  label: 'Objet 5x5' },
+{ type: 'obj3x6',  label: 'Objet 3x6' },
+      { type: 'blocPodium', label: 'Bloc de podium' },
      { type: 'chair',             label: 'Chaise' },
      { type: 'tente',             label: 'Tente' },
       { type: 'deskHotesses',      label: 'Desk hôtesses' },
@@ -1098,6 +1104,9 @@ let lastMouseYM         = 0;
 
     function getObjectSize(type) {
       switch (type) {
+case 'obj12x6': return { wM: 12, hM: 6 };
+case 'obj5x5':  return { wM: 5, hM: 5 };
+case 'obj3x6':  return { wM: 3, hM: 6 };
         case 'table':            return { wM: 1.6, hM: 0.8 };
         case 'chair':            return { wM: 0.45, hM: 0.45 };
         case 'tente':            return { wM: 65, hM: 12 };
@@ -1654,8 +1663,19 @@ if (interactionMode === 'object') {
   context.fillStyle = '#1565c0';
   context.font = isDrawingLegend ? '50px sans-serif' : '16px sans-serif';
   context.fillText('TENTE 65\u00d712m', 0, 0);
-}
+} else if (
+  obj.type === 'obj12x6' ||
+  obj.type === 'obj5x5' ||
+  obj.type === 'obj3x6'
+) {
+  context.fillStyle = 'rgba(0, 0, 0, 0.05)'; // léger fond pour visibilité
+  context.strokeStyle = '#000';
+  context.lineWidth = isDrawingLegend ? 4 : 2;
 
+  // rectangle principal
+  context.fillRect(-wPx / 2, -hPx / 2, wPx, hPx);
+  context.strokeRect(-wPx / 2, -hPx / 2, wPx, hPx);
+}
       context.restore();
     }
 
